@@ -11,7 +11,7 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      GQL_HOST: "https://woonuxt-shop.admin-panels.com/graphql",
+      GQL_HOST: "https://leaderfitness.admin-panels.com/graphql",
       PRODUCT_CATEGORY_PERMALINK: "/produkt-kategoriya/",
       PRODUCTS_PER_PAGE: 12,
     },
@@ -20,14 +20,14 @@ export default defineNuxtConfig({
   app: {
     head: {
       link: [
-        { rel: "preconnect", href: "https://woonuxt-shop.admin-panels.com" },
-        { rel: "dns-prefetch", href: "https://woonuxt-shop.admin-panels.com" },
+        { rel: "preconnect", href: "https://leaderfitness.admin-panels.com" },
+        { rel: "dns-prefetch", href: "https://leaderfitness.admin-panels.com" },
       ],
     },
   },
 
   sitemap: {
-    siteUrl: "https://woonuxt-shop.admin-panels.com",
+    siteUrl: "https://leaderfitness.admin-panels.com",
     excludes: [
       "/checkout/order-received/**",
       "/order-summary/**",
@@ -41,7 +41,7 @@ export default defineNuxtConfig({
   "graphql-client": {
     clients: {
       default: {
-        host: "https://woonuxt-shop.admin-panels.com/graphql",
+        host: "https://leaderfitness.admin-panels.com/graphql",
         tokenStorage: {
           cookieOptions: {
             name: "authToken",
