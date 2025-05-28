@@ -56,7 +56,7 @@ export default defineNuxtConfig({
 
   nitro: {
     prerender: {
-      routes: ["/", "/categories", "/contact"],
+      routes: ["/", "/products", "/categories", "/contact"],
       concurrency: 10,
       interval: 1000,
       failOnError: false,
@@ -65,7 +65,7 @@ export default defineNuxtConfig({
     routeRules: {
       // Генерирани по време на билд
       "/": { static: true },
-      "/products": { isr: { expiration: 600 } },
+      "/products": { static: true },
       "/categories": { static: true },
       "/contact": { static: true },
 
