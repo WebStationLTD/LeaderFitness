@@ -30,37 +30,33 @@ const radioClicked = (rating: string): void => {
     </div>
     <div v-if="isOpen" class="mt-3 text-sm grid text-gray-500 gap-3">
       <div class="cursor-pointer flex gap-2 items-center">
-        <input id="star-five" v-model="selectedTerms" type="radio" value="5" aria-label="5 stars" @click="radioClicked('5')" />
+        <input id="star-five" v-model="selectedTerms" type="radio" value="5" aria-label="5 stars exactly" @click="radioClicked('5')" />
         <label class="flex items-center" for="star-five">
           <StarRating :rating="5" :size="16" />
         </label>
       </div>
       <div class="cursor-pointer flex gap-2 items-center">
-        <input id="star-four" v-model="selectedTerms" type="radio" value="4" aria-label="4 stars" @click="radioClicked('4')" />
+        <input id="star-four" v-model="selectedTerms" type="radio" value="4" aria-label="4 stars exactly" @click="radioClicked('4')" />
         <label class="flex items-center" for="star-four">
           <StarRating :rating="4" :size="16" />
-          <span class="ml-1 text-xs">& {{ $t('messages.general.up') }}</span>
         </label>
       </div>
       <div class="cursor-pointer flex gap-2 items-center">
-        <input id="star-three" v-model="selectedTerms" type="radio" value="3" aria-label="3 stars" @click="radioClicked('3')" />
+        <input id="star-three" v-model="selectedTerms" type="radio" value="3" aria-label="3 stars exactly" @click="radioClicked('3')" />
         <label class="flex items-center" for="star-three">
           <StarRating :rating="3" :size="16" />
-          <span class="ml-1 text-xs">& {{ $t('messages.general.up') }}</span>
         </label>
       </div>
       <div class="cursor-pointer flex gap-2 items-center">
-        <input id="star-two" v-model="selectedTerms" type="radio" value="2" aria-label="2 stars" @click="radioClicked('2')" />
+        <input id="star-two" v-model="selectedTerms" type="radio" value="2" aria-label="2 stars exactly" @click="radioClicked('2')" />
         <label class="flex items-center" for="star-two">
           <StarRating :rating="2" :size="16" />
-          <span class="ml-1 text-xs">& {{ $t('messages.general.up') }}</span>
         </label>
       </div>
       <div class="cursor-pointer flex gap-2 items-center">
-        <input id="star-one" v-model="selectedTerms" type="radio" value="1" aria-label="1 star" @click="radioClicked('1')" />
+        <input id="star-one" v-model="selectedTerms" type="radio" value="1" aria-label="1 star exactly" @click="radioClicked('1')" />
         <label class="flex items-center" for="star-one">
           <StarRating :rating="1" :size="16" />
-          <span class="ml-1 text-xs">& {{ $t('messages.general.up') }}</span>
         </label>
       </div>
     </div>

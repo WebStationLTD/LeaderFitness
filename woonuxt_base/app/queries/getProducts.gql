@@ -9,6 +9,8 @@ query getProducts(
   $priceMax: Float
   $onSale: Boolean
   $orderby: ProductsOrderByEnum = DATE
+  $order: OrderEnum = DESC
+  $rating: [Int]
 ) {
   products(
     first: $first
@@ -21,9 +23,10 @@ query getProducts(
       minPrice: $priceMin
       maxPrice: $priceMax
       onSale: $onSale
+      rating: $rating
       visibility: VISIBLE
       status: "publish"
-      orderby: { field: $orderby, order: DESC }
+      orderby: { field: $orderby, order: $order }
     }
   ) {
     pageInfo {

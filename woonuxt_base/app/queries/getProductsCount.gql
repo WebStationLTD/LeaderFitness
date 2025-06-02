@@ -1,0 +1,31 @@
+query getProductsCount(
+  $slug: [String]
+  $search: String
+  $priceMin: Float
+  $priceMax: Float
+  $onSale: Boolean
+  $orderby: ProductsOrderByEnum = DATE
+  $order: OrderEnum = DESC
+  $rating: [Int]
+) {
+  products(
+    first: 9999
+    where: {
+      categoryIn: $slug
+      search: $search
+      minPrice: $priceMin
+      maxPrice: $priceMax
+      onSale: $onSale
+      rating: $rating
+      visibility: VISIBLE
+      status: "publish"
+      orderby: { field: $orderby, order: $order }
+    }
+  ) {
+    edges {
+      node {
+        databaseId
+      }
+    }
+  }
+}

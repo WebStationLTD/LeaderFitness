@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { loadProducts, updateProductList, products } = useProducts();
+const { loadProductsForPage, updateProductList, products, getCurrentPageFromRoute } = useProducts();
 const { isQueryEmpty } = useHelpers();
 const { storeSettings } = useAppConfig();
 const route = useRoute();
@@ -63,8 +63,9 @@ const categoryFilters = {
 };
 
 onMounted(async () => {
-  // Зареждаме продуктите за категорията с cursor pagination
-  await loadProducts(categoryFilters, 'first');
+  // Зареждаме продуктите за категорията с page-based pagination
+  const currentPageNum = getCurrentPageFromRoute();
+  await loadProductsForPage(currentPageNum, categoryFilters);
 
   // Ако има query параметри, обновяваме списъка
   if (!isQueryEmpty.value) {
@@ -74,6 +75,14 @@ onMounted(async () => {
 
 watch(
   () => route.query,
+  () => {
+    if (route.name !== 'produkt-kategoriya-slug') return;
+    updateProductList();
+  },
+);
+
+watch(
+  () => route.params,
   () => {
     if (route.name !== 'produkt-kategoriya-slug') return;
     updateProductList();

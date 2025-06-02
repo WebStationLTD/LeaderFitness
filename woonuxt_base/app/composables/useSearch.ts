@@ -5,7 +5,7 @@ export function useSearching() {
 
   const isShowingSearch = useState<boolean>('isShowingSearch', () => false);
   const searchQuery = useState<string>('searchQuery', () => '');
-  const isSearchActive = computed<boolean>(() => !!searchQuery.value);
+  const isSearchActive = computed<boolean>(() => !!(searchQuery.value || route.query.search));
 
   searchQuery.value = route.query.search as string;
 
@@ -16,14 +16,35 @@ export function useSearching() {
   function setSearchQuery(search: string): void {
     const { updateProductList } = useProducts();
     searchQuery.value = search;
-    router.push({ query: { ...route.query, search: search || undefined } });
+
+    // Премахваме page параметъра когато променяме търсенето
+    const currentPath = route.path.includes('/page/') ? route.path.split('/page/')[0] : route.path;
+
+    router.push({
+      path: currentPath,
+      query: { ...route.query, search: search || undefined },
+    });
+
     setTimeout(() => {
       updateProductList();
     }, 50);
   }
 
   function clearSearchQuery(): void {
-    setSearchQuery('');
+    const { updateProductList } = useProducts();
+    searchQuery.value = '';
+
+    // Премахваме page параметъра когато изчистваме търсенето
+    const currentPath = route.path.includes('/page/') ? route.path.split('/page/')[0] : route.path;
+
+    router.push({
+      path: currentPath,
+      query: { ...route.query, search: undefined },
+    });
+
+    setTimeout(() => {
+      updateProductList();
+    }, 50);
   }
 
   const toggleSearch = (): void => {

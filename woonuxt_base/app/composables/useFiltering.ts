@@ -51,27 +51,22 @@ export function useFiltering() {
     // Update the filter query
     filterQuery.value = newFilterQuery;
 
-    router.push({ query: { ...route.query, filter: newFilterQuery } });
-
     // remove pagination from the url
     const path = route.path.includes('/page/') ? route.path.split('/page/')[0] : route.path;
 
-    // if the filter query is empty, remove it from the url
+    // ПРИНУДИТЕЛНО навигираме с navigateTo вместо router.push за да се осигури че URL се обновява правилно
+    const queryParams = { ...route.query };
+
     if (!newFilterQuery) {
-      router.push({
-        path,
-        query: { ...route.query, filter: undefined },
-      });
+      delete queryParams.filter;
     } else {
-      router.push({
-        path,
-        query: { ...route.query, filter: newFilterQuery },
-      });
+      queryParams.filter = newFilterQuery;
     }
 
-    setTimeout(() => {
-      updateProductList();
-    }, 50);
+    // Навигираме към новия URL без pagination
+    const newUrl = Object.keys(queryParams).length > 0 ? `${path}?${new URLSearchParams(queryParams as any).toString()}` : path;
+
+    navigateTo(newUrl);
   }
 
   /**
@@ -80,7 +75,19 @@ export function useFiltering() {
   function resetFilter(): void {
     const { scrollToTop } = useHelpers();
     filterQuery.value = '';
-    router.push({ query: { ...route.query, filter: undefined } });
+
+    // Обнуляваме всички state променливи принудително
+    const searchQuery = useState<string>('searchQuery', () => '');
+    searchQuery.value = '';
+
+    // Премахваме page параметъра когато изчистваме филтрите
+    const currentPath = route.path.includes('/page/') ? route.path.split('/page/')[0] : route.path;
+
+    // Изчистваме всички query параметри свързани с филтриране и търсене
+    router.push({
+      path: currentPath,
+      query: {}, // Изчистваме всички query параметри
+    });
 
     setTimeout(() => {
       updateProductList();
@@ -92,7 +99,20 @@ export function useFiltering() {
    * Check if there are any filters active
    * @returns {boolean}
    */
-  const isFiltersActive = computed<boolean>(() => !!filterQuery.value);
+  const isFiltersActive = computed<boolean>(() => {
+    const route = useRoute();
+    return !!(
+      filterQuery.value ||
+      route.query.search ||
+      route.query.priceMin ||
+      route.query.priceMax ||
+      route.query.sale ||
+      route.query.rating ||
+      route.query.category ||
+      route.query.orderby ||
+      route.query.order
+    );
+  });
 
   /**
    * Server-side филтриране се обработва автоматично в GraphQL заявката

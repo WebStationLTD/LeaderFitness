@@ -1,61 +1,41 @@
 <script setup lang="ts">
-const { currentPage, isLoading, nextPage, prevPage, previousCursors } = useProducts();
-const { getFilter } = useFiltering();
-const route = useRoute();
+const { currentPage, isLoading, totalProducts, getCurrentPageFromRoute, navigateToPage } = useProducts();
 
-// Извличаме всички филтри - същата логика като в updateProductList
-const currentFilters = computed(() => {
-  const filters = {
-    search: route.query.search as string,
-    categoryIn: route.query.category ? [route.query.category as string] : getFilter('category'),
-    priceMin: route.query.priceMin ? parseFloat(route.query.priceMin as string) : undefined,
-    priceMax: route.query.priceMax ? parseFloat(route.query.priceMax as string) : undefined,
-    onSale: route.query.sale === 'true' ? true : getFilter('sale').length > 0 ? true : undefined,
-    orderby: (route.query.orderby as string) || 'DATE',
-  };
+// Взимаме текущия page номер от URL
+const currentPageNumber = computed(() => getCurrentPageFromRoute());
 
-  // Добавяме ценови филтър ако има такъв
-  const priceFilter = getFilter('price');
-  if (priceFilter.length === 2 && priceFilter[0] && priceFilter[1]) {
-    const minPrice = parseFloat(priceFilter[0]);
-    const maxPrice = parseFloat(priceFilter[1]);
-    if (!isNaN(minPrice)) filters.priceMin = minPrice;
-    if (!isNaN(maxPrice)) filters.priceMax = maxPrice;
+const totalPages = computed(() => {
+  if (totalProducts.value > 0) {
+    return Math.ceil(totalProducts.value / 12);
   }
-
-  return filters;
+  return 1;
 });
 
-// Изчисляваме приблизителния номер на страницата
-const currentPageNumber = computed(() => {
-  return previousCursors.value.length + 1;
-});
-
-// Показваме честна информация за страниците
+// Показваме информация за страниците
 const pageDisplay = computed(() => {
   const current = currentPageNumber.value;
+  const total = totalPages.value;
 
-  // Ако има следваща страница
-  if (currentPage.value?.pageInfo.hasNextPage) {
-    return `Страница ${current} (има още)`;
-  } else if (currentPage.value?.pageInfo.hasPreviousPage) {
-    // Последна страница
-    return `Страница ${current} (последна)`;
+  if (total > 1) {
+    return `Страница ${current} от ${total}`;
   } else {
-    // Единствена страница
     return `Страница ${current}`;
   }
 });
 
+// Проверяваме дали има предишна/следваща страница
+const hasPrevPage = computed(() => currentPageNumber.value > 1);
+const hasNextPage = computed(() => currentPageNumber.value < totalPages.value);
+
 const handlePrevPage = async () => {
-  if (!isLoading.value && currentPage.value?.pageInfo.hasPreviousPage) {
-    await prevPage(currentFilters.value);
+  if (!isLoading.value && hasPrevPage.value) {
+    await navigateToPage(currentPageNumber.value - 1);
   }
 };
 
 const handleNextPage = async () => {
-  if (!isLoading.value && currentPage.value?.pageInfo.hasNextPage) {
-    await nextPage(currentFilters.value);
+  if (!isLoading.value && hasNextPage.value) {
+    await navigateToPage(currentPageNumber.value + 1);
   }
 };
 </script>
@@ -64,10 +44,10 @@ const handleNextPage = async () => {
   <div class="flex justify-center items-center mt-8 mb-16 gap-4">
     <button
       @click="handlePrevPage"
-      :disabled="!currentPage?.pageInfo.hasPreviousPage || isLoading"
+      :disabled="!hasPrevPage || isLoading"
       :class="{
-        'cursor-not-allowed opacity-50': !currentPage?.pageInfo.hasPreviousPage || isLoading,
-        'hover:bg-gray-50': currentPage?.pageInfo.hasPreviousPage && !isLoading,
+        'cursor-not-allowed opacity-50': !hasPrevPage || isLoading,
+        'hover:bg-gray-50': hasPrevPage && !isLoading,
       }"
       class="flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-l-md focus:z-10 focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
       aria-label="Предишна страница">
@@ -82,10 +62,10 @@ const handleNextPage = async () => {
 
     <button
       @click="handleNextPage"
-      :disabled="!currentPage?.pageInfo.hasNextPage || isLoading"
+      :disabled="!hasNextPage || isLoading"
       :class="{
-        'cursor-not-allowed opacity-50': !currentPage?.pageInfo.hasNextPage || isLoading,
-        'hover:bg-gray-50': currentPage?.pageInfo.hasNextPage && !isLoading,
+        'cursor-not-allowed opacity-50': !hasNextPage || isLoading,
+        'hover:bg-gray-50': hasNextPage && !isLoading,
       }"
       class="flex items-center px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-r-md focus:z-10 focus:ring-2 focus:ring-primary focus:border-primary transition-colors"
       aria-label="Следваща страница">

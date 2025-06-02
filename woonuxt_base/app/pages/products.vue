@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { loadProducts, updateProductList, products } = useProducts();
+const { loadProductsForPage, updateProductList, products, getCurrentPageFromRoute } = useProducts();
 const route = useRoute();
 const { storeSettings } = useAppConfig();
 const { isQueryEmpty } = useHelpers();
@@ -84,7 +84,8 @@ const initialFilters = {
 
 onMounted(async () => {
   // Зареждаме продуктите след като компонентът е монтиран
-  await loadProducts(initialFilters, 'first');
+  const currentPageNum = getCurrentPageFromRoute();
+  await loadProductsForPage(currentPageNum, initialFilters);
 
   // Ако има query параметри, обновяваме списъка
   if (!isQueryEmpty.value) {
@@ -95,7 +96,15 @@ onMounted(async () => {
 watch(
   () => route.query,
   () => {
-    if (route.name !== 'products') return;
+    if (route.name !== 'products' && route.name !== 'product-page-pager') return;
+    updateProductList();
+  },
+);
+
+watch(
+  () => route.params,
+  () => {
+    if (route.name !== 'products' && route.name !== 'product-page-pager') return;
     updateProductList();
   },
 );

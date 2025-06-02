@@ -11,8 +11,8 @@ watch(isFiltersActive, () => {
 
 const checkboxClicked = (e) => {
   if (selectedTerms.value.length === 0) {
-    selectedTerms.value = [e.target.value];
-    setFilter('sale', [e.target.value]);
+    selectedTerms.value = ['true'];
+    setFilter('sale', ['true']);
   } else {
     selectedTerms.value = [];
     setFilter('sale', []);
@@ -29,7 +29,7 @@ const checkboxClicked = (e) => {
     <div v-if="isOpen" class="mt-3 mr-1 max-h-[240px] grid gap-1 overflow-auto custom-scrollbar">
       <div class="flex gap-2 items-center">
         <label for="sale-true" class="cursor-pointer m-0 text-sm sr-only" aria-label="Only show products on sale"> Only show products on sale</label>
-        <input id="sale-true" v-model="selectedTerms" type="checkbox" :value="true" aria-label="Sale Products Only" @click="checkboxClicked" />
+        <input id="sale-true" v-model="selectedTerms" type="checkbox" value="true" aria-label="Sale Products Only" @click="checkboxClicked" />
       </div>
     </div>
   </div>

@@ -2,12 +2,37 @@
 const { getOrderQuery, setOrderQuery } = await useSorting();
 const { storeSettings } = useAppConfig();
 const selectedOrder = ref(getOrderQuery());
-const orderby = ref(selectedOrder.value.orderBy || 'date');
-const order = ref(selectedOrder.value.order);
+
+// Обратно мапване от WooCommerce GraphQL към UI стойности
+const reverseMapOrderByValue = (value) => {
+  const mapping = {
+    DATE: 'date',
+    TITLE: 'alphabetically',
+    PRICE: 'price',
+    RATING: 'rating',
+  };
+  return mapping[value] || 'date';
+};
+
+const orderby = ref(reverseMapOrderByValue(selectedOrder.value.orderBy) || 'date');
+const order = ref(selectedOrder.value.order || 'DESC');
+
+// Мапване на стойностите от UI към WooCommerce GraphQL
+const mapOrderByValue = (value) => {
+  const mapping = {
+    date: 'DATE',
+    alphabetically: 'TITLE',
+    price: 'PRICE',
+    rating: 'RATING',
+    discount: 'DATE', // WooCommerce няма built-in discount сортиране, използваме дата
+  };
+  return mapping[value] || 'DATE';
+};
 
 // Update the URL when the checkbox is changed
 watch([orderby, order], () => {
-  setOrderQuery(orderby.value, order.value);
+  const mappedOrderBy = mapOrderByValue(orderby.value);
+  setOrderQuery(mappedOrderBy, order.value);
 });
 </script>
 

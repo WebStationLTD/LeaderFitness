@@ -1,13 +1,11 @@
 <script setup lang="ts">
 const { totalProducts } = useProducts();
-const { clearSearchQuery } = useSearching();
 const { resetFilter } = useFiltering();
 const { isFiltersActive } = useFiltering();
 const { isSearchActive } = useSearching();
 
 const clearAll = () => {
-  resetFilter();
-  clearSearchQuery();
+  resetFilter(); // resetFilter() вече изчиства всички query параметри
 };
 
 // Показваме clear бутона само ако има активни филтри или търсене

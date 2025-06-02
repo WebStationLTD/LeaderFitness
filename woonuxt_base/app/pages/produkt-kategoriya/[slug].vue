@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue';
 
-const { setProducts, updateProductList, products, loadProducts } = useProducts();
+const { setProducts, updateProductList, products, loadProductsForPage, getCurrentPageFromRoute } = useProducts();
 const { isQueryEmpty } = useHelpers();
 const { storeSettings } = useAppConfig();
 const route = useRoute();
@@ -17,31 +17,28 @@ console.log('Текущ route:', {
   params: route.params,
 });
 
-// Извличане на slug параметъра от различни източници
+// Извличане на slug параметъра от route параметрите
 let slugFromParams = '';
 
-// 1. Опитваме от route.params.slug
-if (route.params && route.params.slug) {
+// За page-based маршрути използваме categorySlug параметъра
+if (route.params && route.params.categorySlug) {
+  slugFromParams = typeof route.params.categorySlug === 'string' ? route.params.categorySlug : String(route.params.categorySlug);
+}
+
+// Резервен вариант - използваме slug параметъра
+if (!slugFromParams && route.params && route.params.slug) {
   slugFromParams = typeof route.params.slug === 'string' ? route.params.slug : String(route.params.slug);
 }
 
-// 2. Ако липсва, опитваме да го извлечем от path
+// Като последен вариант, извличаме от path (за стари URL-и)
 if (!slugFromParams && route.path) {
   const pathParts = route.path.split('/');
-  if (pathParts.length > 0) {
-    const lastPart = pathParts[pathParts.length - 1];
-    if (lastPart) slugFromParams = lastPart;
-  }
-}
-
-// 3. Ако все още липсва, извличаме от fullPath
-if (!slugFromParams && route.fullPath) {
-  const pathParts = route.fullPath.split('/');
-  if (pathParts.length > 0) {
-    const lastPart = pathParts[pathParts.length - 1];
-    if (lastPart) {
-      const withoutQuery = lastPart.split('?')[0];
-      if (withoutQuery) slugFromParams = withoutQuery;
+  // Търсим categorySlug-а в пътя - това е частта след 'produkt-kategoriya'
+  const categoryIndex = pathParts.findIndex((part) => part === 'produkt-kategoriya');
+  if (categoryIndex !== -1 && pathParts[categoryIndex + 1] && pathParts[categoryIndex + 1] !== 'page') {
+    const categorySlug = pathParts[categoryIndex + 1];
+    if (categorySlug) {
+      slugFromParams = categorySlug;
     }
   }
 }
@@ -123,7 +120,8 @@ if (matchingCategory.value && matchingCategory.value.slug) {
       orderby: (route.query.orderby as string) || 'DATE',
     };
 
-    await loadProducts(categoryFilters, 'first');
+    const currentPageNum = getCurrentPageFromRoute();
+    await loadProductsForPage(currentPageNum, categoryFilters);
     console.log(`Заредени продукти от категория ${matchingCategory.value.slug} с pagination`);
   } catch (error) {
     console.error('Грешка при зареждане на продукти:', error);
@@ -140,7 +138,8 @@ if (matchingCategory.value && matchingCategory.value.slug) {
       orderby: (route.query.orderby as string) || 'DATE',
     };
 
-    await loadProducts(categoryFilters, 'first');
+    const currentPageNum = getCurrentPageFromRoute();
+    await loadProductsForPage(currentPageNum, categoryFilters);
   } catch (error) {
     console.error('Грешка при зареждане на продукти по slug:', error);
   }
@@ -155,7 +154,8 @@ if (matchingCategory.value && matchingCategory.value.slug) {
       orderby: (route.query.orderby as string) || 'DATE',
     };
 
-    await loadProducts(generalFilters, 'first');
+    const currentPageNum = getCurrentPageFromRoute();
+    await loadProductsForPage(currentPageNum, generalFilters);
   } catch (error) {
     console.error('Грешка при зареждане на всички продукти:', error);
   }
@@ -171,11 +171,19 @@ onMounted(() => {
   if (!isQueryEmpty.value) updateProductList();
 });
 
-// Следим за промени в заявката
+// Следим за промени в заявката и параметрите
 watch(
   () => route.query,
   () => {
-    if (route.name !== 'produkt-kategoriya-slug') return;
+    if (route.name !== 'produkt-kategoriya-slug' && route.name !== 'produkt-kategoriya-page-pager') return;
+    updateProductList();
+  },
+);
+
+watch(
+  () => route.params,
+  () => {
+    if (route.name !== 'produkt-kategoriya-slug' && route.name !== 'produkt-kategoriya-page-pager') return;
     updateProductList();
   },
 );
