@@ -1,21 +1,13 @@
 <script setup lang="ts">
-import { ref, onMounted, watch, computed } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 
-const { setProducts, updateProductList, products, loadProductsForPage, getCurrentPageFromRoute } = useProducts();
+const { loadProductsForPage, updateProductList, products, getCurrentPageFromRoute } = useProducts();
 const { isQueryEmpty } = useHelpers();
 const { storeSettings } = useAppConfig();
 const route = useRoute();
 
 // За да контролираме показването на компонентите
 const isLoading = ref(true);
-
-// По-детайлно логване за дебъг
-console.log('Текущ route:', {
-  fullPath: route.fullPath,
-  path: route.path,
-  name: route.name,
-  params: route.params,
-});
 
 // Извличане на slug параметъра от route параметрите
 let slugFromParams = '';
@@ -43,21 +35,11 @@ if (!slugFromParams && route.path) {
   }
 }
 
-console.log('Извлечен slug:', slugFromParams);
-
-// Проверяваме дали slug-а е празен
-if (!slugFromParams) {
-  console.log('Използваме всички продукти, тъй като slug е празен');
-} else {
-  console.log('Slug от URL (преди декодиране):', slugFromParams);
-}
-
 // Проверяваме дали slug-а съдържа кирилица или други специални символи
 let decodedSlug = slugFromParams;
 try {
   if (slugFromParams) {
     decodedSlug = decodeURIComponent(slugFromParams);
-    console.log('Декодиран slug:', decodedSlug);
   }
 } catch (error) {
   console.error('Грешка при декодиране на URL:', error);
@@ -94,81 +76,111 @@ interface Category {
 }
 
 const matchingCategory = ref<Category | null>(null);
-const categoryTitle = ref('');
-const categoryDescription = ref('');
+const categoryTitle = ref(decodedSlug || 'All Products');
+const categoryDescription = ref(`Products in category ${decodedSlug || 'All Products'}`);
 
-// Зареждаме категориите
-const { data: categoriesData } = await useAsyncGql('getProductCategories');
-const allCategories = computed(() => categoriesData.value?.productCategories?.nodes || []);
+// Задаваме базови SEO данни синхронно за SSR
+useHead({
+  title: categoryTitle.value,
+  meta: [{ name: 'description', content: categoryDescription.value }],
+});
 
-// Опитваме се първо да намерим категорията
-if (slug.value) {
-  matchingCategory.value = allCategories.value.find((cat: Category) => cat.slug && (cat.slug === slug.value || cat.slug === decodedSlug)) || null;
-
-  console.log('Намерена категория:', matchingCategory.value);
-}
-
-// Ако имаме категория, зареждаме продуктите с новия подход
-if (matchingCategory.value && matchingCategory.value.slug) {
+onMounted(async () => {
   try {
-    const categoryFilters = {
-      categoryIn: [matchingCategory.value.slug],
-      search: route.query.search as string,
-      priceMin: route.query.priceMin ? parseFloat(route.query.priceMin as string) : undefined,
-      priceMax: route.query.priceMax ? parseFloat(route.query.priceMax as string) : undefined,
-      onSale: route.query.sale === 'true' ? true : undefined,
-      orderby: (route.query.orderby as string) || 'DATE',
-    };
+    // Зареждаме категориите САМО в браузъра
+    const { data: categoriesData } = await useAsyncGql('getProductCategories');
+    const allCategories = categoriesData.value?.productCategories?.nodes || [];
 
-    const currentPageNum = getCurrentPageFromRoute();
-    await loadProductsForPage(currentPageNum, categoryFilters);
-    console.log(`Заредени продукти от категория ${matchingCategory.value.slug} с pagination`);
+    // Опитваме се първо да намерим категорията
+    if (slug.value) {
+      matchingCategory.value = allCategories.find((cat: Category) => cat.slug && (cat.slug === slug.value || cat.slug === decodedSlug)) || null;
+    }
+
+    // Обновяваме SEO данните ако имаме категория
+    if (matchingCategory.value?.seo) {
+      categoryTitle.value = matchingCategory.value.seo.title || matchingCategory.value.name || decodedSlug || 'All Products';
+      categoryDescription.value =
+        matchingCategory.value.seo.metaDesc ||
+        matchingCategory.value.description ||
+        `Products in category ${matchingCategory.value.name || decodedSlug || 'All Products'}`;
+
+      useHead({
+        title: categoryTitle.value,
+        meta: [
+          { name: 'description', content: categoryDescription.value },
+          { property: 'og:title', content: matchingCategory.value.seo.opengraphTitle || categoryTitle.value },
+          { property: 'og:description', content: matchingCategory.value.seo.opengraphDescription || categoryDescription.value },
+        ],
+        link: [{ rel: 'canonical', href: matchingCategory.value.seo.canonical || '' }],
+      });
+
+      // Добавяне на структурирани данни (schema.org) ако са налични
+      if (matchingCategory.value.seo.schema?.raw) {
+        useHead({
+          script: [
+            {
+              type: 'application/ld+json',
+              innerHTML: matchingCategory.value.seo.schema.raw,
+            },
+          ],
+        });
+      }
+    }
+  } catch (error) {
+    console.warn('Не можахме да заредим категориите (очаквано при първо зареждане):', error);
+  }
+
+  try {
+    // Ако имаме категория, зареждаме продуктите с новия подход
+    if (matchingCategory.value && matchingCategory.value.slug) {
+      const categoryFilters = {
+        categoryIn: [matchingCategory.value.slug],
+        search: route.query.search as string,
+        priceMin: route.query.priceMin ? parseFloat(route.query.priceMin as string) : undefined,
+        priceMax: route.query.priceMax ? parseFloat(route.query.priceMax as string) : undefined,
+        onSale: route.query.sale === 'true' ? true : undefined,
+        orderby: (route.query.orderby as string) || 'DATE',
+      };
+
+      const currentPageNum = getCurrentPageFromRoute();
+      await loadProductsForPage(currentPageNum, categoryFilters);
+    } else if (slug.value) {
+      // Нямаме намерена категория, но опитваме директно със slug-а
+      const categoryFilters = {
+        categoryIn: [slug.value],
+        search: route.query.search as string,
+        priceMin: route.query.priceMin ? parseFloat(route.query.priceMin as string) : undefined,
+        priceMax: route.query.priceMax ? parseFloat(route.query.priceMax as string) : undefined,
+        onSale: route.query.sale === 'true' ? true : undefined,
+        orderby: (route.query.orderby as string) || 'DATE',
+      };
+
+      const currentPageNum = getCurrentPageFromRoute();
+      await loadProductsForPage(currentPageNum, categoryFilters);
+    } else {
+      // Ако нямаме slug, зареждаме първата страница без категория филтър
+      const generalFilters = {
+        search: route.query.search as string,
+        priceMin: route.query.priceMin ? parseFloat(route.query.priceMin as string) : undefined,
+        priceMax: route.query.priceMax ? parseFloat(route.query.priceMax as string) : undefined,
+        onSale: route.query.sale === 'true' ? true : undefined,
+        orderby: (route.query.orderby as string) || 'DATE',
+      };
+
+      const currentPageNum = getCurrentPageFromRoute();
+      await loadProductsForPage(currentPageNum, generalFilters);
+    }
+
+    // Ако има query параметри, обновяваме списъка
+    if (!isQueryEmpty.value) {
+      updateProductList();
+    }
   } catch (error) {
     console.error('Грешка при зареждане на продукти:', error);
   }
-} else if (slug.value) {
-  // Нямаме намерена категория, но опитваме директно със slug-а
-  try {
-    const categoryFilters = {
-      categoryIn: [slug.value],
-      search: route.query.search as string,
-      priceMin: route.query.priceMin ? parseFloat(route.query.priceMin as string) : undefined,
-      priceMax: route.query.priceMax ? parseFloat(route.query.priceMax as string) : undefined,
-      onSale: route.query.sale === 'true' ? true : undefined,
-      orderby: (route.query.orderby as string) || 'DATE',
-    };
 
-    const currentPageNum = getCurrentPageFromRoute();
-    await loadProductsForPage(currentPageNum, categoryFilters);
-  } catch (error) {
-    console.error('Грешка при зареждане на продукти по slug:', error);
-  }
-} else {
-  // Ако нямаме slug, зареждаме първата страница без категория филтър
-  try {
-    const generalFilters = {
-      search: route.query.search as string,
-      priceMin: route.query.priceMin ? parseFloat(route.query.priceMin as string) : undefined,
-      priceMax: route.query.priceMax ? parseFloat(route.query.priceMax as string) : undefined,
-      onSale: route.query.sale === 'true' ? true : undefined,
-      orderby: (route.query.orderby as string) || 'DATE',
-    };
-
-    const currentPageNum = getCurrentPageFromRoute();
-    await loadProductsForPage(currentPageNum, generalFilters);
-  } catch (error) {
-    console.error('Грешка при зареждане на всички продукти:', error);
-  }
-}
-
-// Преминаваме към режим "зареден" след кратко време
-setTimeout(() => {
+  // Преминаваме към режим "зареден"
   isLoading.value = false;
-}, 500);
-
-// Актуализиране на списъка с продукти при нужда
-onMounted(() => {
-  if (!isQueryEmpty.value) updateProductList();
 });
 
 // Следим за промени в заявката и параметрите
@@ -187,35 +199,6 @@ watch(
     updateProductList();
   },
 );
-
-// Използване на SEO данни от Yoast ако са налични
-categoryTitle.value = matchingCategory.value?.seo?.title || matchingCategory.value?.name || decodedSlug || 'All Products';
-categoryDescription.value =
-  matchingCategory.value?.seo?.metaDesc ||
-  matchingCategory.value?.description ||
-  `Products in category ${matchingCategory.value?.name || decodedSlug || 'All Products'}`;
-
-useHead({
-  title: categoryTitle.value,
-  meta: [
-    { name: 'description', content: categoryDescription.value },
-    { property: 'og:title', content: matchingCategory.value?.seo?.opengraphTitle || categoryTitle.value },
-    { property: 'og:description', content: matchingCategory.value?.seo?.opengraphDescription || categoryDescription.value },
-  ],
-  link: [{ rel: 'canonical', href: matchingCategory.value?.seo?.canonical || '' }],
-});
-
-// Добавяне на структурирани данни (schema.org) ако са налични в Yoast
-if (matchingCategory.value?.seo?.schema?.raw) {
-  useHead({
-    script: [
-      {
-        type: 'application/ld+json',
-        innerHTML: matchingCategory.value.seo.schema.raw,
-      },
-    ],
-  });
-}
 </script>
 
 <template>

@@ -4,28 +4,34 @@ const route = useRoute();
 const { storeSettings } = useAppConfig();
 const { isQueryEmpty } = useHelpers();
 
-let shopTitle = 'Products';
-let shopDescription = 'Discover our products';
-let seoDataSet = false;
+// Задаваме базови SEO данни синхронно за SSR
+useHead({
+  title: 'Products',
+  meta: [{ name: 'description', content: 'Discover our products' }],
+});
 
-try {
-  // Зареждаме SEO данни за страницата с продукти
-  const { data: pagesData } = await useAsyncGql('getShopPage');
-  const productPage = pagesData.value?.page;
+// Зареждаме първата страница с продукти с server-side pagination в onMounted
+const initialFilters = {
+  search: route.query.search as string,
+  categoryIn: route.query.category ? [route.query.category as string] : undefined,
+  priceMin: route.query.priceMin ? parseFloat(route.query.priceMin as string) : undefined,
+  priceMax: route.query.priceMax ? parseFloat(route.query.priceMax as string) : undefined,
+  onSale: route.query.sale === 'true' ? true : undefined,
+  orderby: (route.query.orderby as string) || 'DATE',
+};
 
-  // Анализ на получената информация
-  if (!productPage) {
-    console.error('Не е намерена страница products в WordPress');
-  } else {
-    // Проверяваме дали имаме SEO данни
-    if (!productPage.seo) {
-      console.error('Страницата няма SEO данни от Yoast');
-    } else {
-      // Използваме SEO данните от Yoast
-      shopTitle = productPage.seo.title || productPage.title || 'Products';
-      shopDescription = productPage.seo.metaDesc || productPage.content || 'Discover our products';
+onMounted(async () => {
+  try {
+    // Зареждаме SEO данни за страницата с продукти САМО в браузъра
+    const { data: pagesData } = await useAsyncGql('getShopPage');
+    const productPage = pagesData.value?.page;
 
-      // Задаваме SEO метаданните
+    // Ако имаме SEO данни, обновяваме title и meta
+    if (productPage?.seo) {
+      const shopTitle = productPage.seo.title || productPage.title || 'Products';
+      const shopDescription = productPage.seo.metaDesc || productPage.content || 'Discover our products';
+
+      // Обновяваме SEO метаданните
       useHead({
         title: shopTitle,
         meta: [
@@ -49,47 +55,23 @@ try {
           ],
         });
       }
-
-      seoDataSet = true; // Маркираме, че сме задали SEO данни
     }
+  } catch (error) {
+    console.warn('Не можахме да заредим SEO данните (очаквано при първо зареждане):', error);
+    // Не правим нищо - вече имаме базови SEO данни
   }
 
-  // Ако не сме задали SEO данни, използваме резервни стойности
-  if (!seoDataSet) {
-    console.warn('Използваме резервни SEO данни за продуктовата страница');
-    useHead({
-      title: 'Products',
-      meta: [{ name: 'description', content: 'Discover our products' }],
-    });
-  }
-} catch (error) {
-  console.error('Грешка при зареждане на SEO данни:', error);
+  try {
+    // Зареждаме продуктите след като компонентът е монтиран
+    const currentPageNum = getCurrentPageFromRoute();
+    await loadProductsForPage(currentPageNum, initialFilters);
 
-  // Резервно решение
-  useHead({
-    title: 'Products',
-    meta: [{ name: 'description', content: 'Discover our products' }],
-  });
-}
-
-// Зареждаме първата страница с продукти с server-side pagination в onMounted
-const initialFilters = {
-  search: route.query.search as string,
-  categoryIn: route.query.category ? [route.query.category as string] : undefined,
-  priceMin: route.query.priceMin ? parseFloat(route.query.priceMin as string) : undefined,
-  priceMax: route.query.priceMax ? parseFloat(route.query.priceMax as string) : undefined,
-  onSale: route.query.sale === 'true' ? true : undefined,
-  orderby: (route.query.orderby as string) || 'DATE',
-};
-
-onMounted(async () => {
-  // Зареждаме продуктите след като компонентът е монтиран
-  const currentPageNum = getCurrentPageFromRoute();
-  await loadProductsForPage(currentPageNum, initialFilters);
-
-  // Ако има query параметри, обновяваме списъка
-  if (!isQueryEmpty.value) {
-    updateProductList();
+    // Ако има query параметри, обновяваме списъка
+    if (!isQueryEmpty.value) {
+      updateProductList();
+    }
+  } catch (error) {
+    console.error('Грешка при зареждане на продукти:', error);
   }
 });
 
