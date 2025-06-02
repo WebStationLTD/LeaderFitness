@@ -82,20 +82,30 @@ useHead({
   meta: [{ name: 'description', content: categoryDescription.value }],
 });
 
-// Зареждаме продуктите ВЕДНАГА с категорийния филтър
-const categoryFilters = computed(() => ({
-  categoryIn: slug.value ? [slug.value] : undefined,
-  search: route.query.search as string,
-  priceMin: route.query.priceMin ? parseFloat(route.query.priceMin as string) : undefined,
-  priceMax: route.query.priceMax ? parseFloat(route.query.priceMax as string) : undefined,
-  onSale: route.query.sale === 'true' ? true : undefined,
-  orderby: (route.query.orderby as string) || 'DATE',
-  order: (route.query.order as string) || 'DESC',
-  rating: route.query.rating ? [parseInt(route.query.rating as string, 10)] : undefined,
-}));
+// Server-side data loading
+const { data: initialData, error } = await useAsyncData(`category-${slug.value}`, async () => {
+  try {
+    // Зареждаме продуктите ВЕДНАГА с категорийния филтър
+    const categoryFilters = {
+      categoryIn: slug.value ? [slug.value] : undefined,
+      search: route.query.search as string,
+      priceMin: route.query.priceMin ? parseFloat(route.query.priceMin as string) : undefined,
+      priceMax: route.query.priceMax ? parseFloat(route.query.priceMax as string) : undefined,
+      onSale: route.query.sale === 'true' ? true : undefined,
+      orderby: (route.query.orderby as string) || 'DATE',
+      order: (route.query.order as string) || 'DESC',
+      rating: route.query.rating ? [parseInt(route.query.rating as string, 10)] : undefined,
+    };
 
-const currentPageNum = getCurrentPageFromRoute();
-await loadProductsForPage(currentPageNum, categoryFilters.value);
+    const currentPageNum = getCurrentPageFromRoute();
+    await loadProductsForPage(currentPageNum, categoryFilters);
+
+    return { success: true };
+  } catch (err) {
+    console.error('Грешка при зареждане на продукти:', err);
+    return { success: false, error: err };
+  }
+});
 
 // Зареждаме категорийните данни и SEO САМО в браузъра
 onMounted(async () => {
@@ -179,6 +189,11 @@ watch(
       <div class="inline-block p-4 text-gray-500">
         <div class="h-8 w-8 border-t-2 border-primary border-solid rounded-full mx-auto animate-spin mb-4"></div>
         <p>Зареждане на продукти...</p>
+      </div>
+    </div>
+    <div v-else-if="error" class="py-16 text-center">
+      <div class="text-red-500">
+        <p>Грешка при зареждане на продукти. Моля опитайте отново.</p>
       </div>
     </div>
     <NoProductsFound v-else>

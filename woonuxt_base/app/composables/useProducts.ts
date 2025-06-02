@@ -158,7 +158,6 @@ export function useProducts() {
   async function loadProductsCount(filters: PaginationFilters = {}): Promise<void> {
     try {
       const countVariables: any = {
-        first: 1000, // Зареждаме много продукти за да получим точния брой
         search: filters.search || undefined,
         slug: filters.categoryIn?.length ? filters.categoryIn : undefined,
         priceMin: filters.priceMin || undefined,
@@ -169,16 +168,13 @@ export function useProducts() {
         rating: filters.rating?.length ? filters.rating : undefined,
       };
 
-      const { data: countData } = await useAsyncGql('getProducts' as any, countVariables);
+      const { data: countData } = await useAsyncGql('getProductsCount', countVariables);
 
-      if (countData.value?.products?.nodes) {
-        totalProducts.value = countData.value.products.nodes.length;
-
-        // Ако имаме точно 1000, вероятно има повече
-        if (totalProducts.value === 1000 && countData.value.products.pageInfo?.hasNextPage) {
-          // В този случай използваме приблизителна стойност
-          totalProducts.value = countData.value.products.pageInfo.total || 1000;
-        }
+      if (countData.value?.products?.edges) {
+        totalProducts.value = countData.value.products.edges.length;
+      } else {
+        // Fallback - използваме данните от текущата страница
+        totalProducts.value = products.value.length || 0;
       }
     } catch (error) {
       console.error('Грешка при зареждане на общ брой продукти:', error);
@@ -237,8 +233,6 @@ export function useProducts() {
     // Проверяваме дали сме в категорийна страница
     if (route.name === 'produkt-kategoriya-slug' || route.name === 'produkt-kategoriya-page-pager') {
       categorySlug = ((route.params as any).categorySlug || (route.params as any).slug) as string;
-    } else if (route.name === 'product-category-slug' || route.name === 'product-category-page-pager') {
-      categorySlug = route.params.slug as string;
     }
 
     // Парсваме всички филтри от URL
