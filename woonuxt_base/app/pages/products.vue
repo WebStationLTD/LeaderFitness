@@ -1,83 +1,98 @@
 <script setup lang="ts">
-const { loadProductsForPage, updateProductList, products, getCurrentPageFromRoute, isLoading } = useProducts();
+const { loadProductsForPage, updateProductList, products, getCurrentPageFromRoute } = useProducts();
 const route = useRoute();
 const { storeSettings } = useAppConfig();
 const { isQueryEmpty } = useHelpers();
 
-// Задаваме базови SEO данни синхронно за SSR
-useHead({
-  title: 'Products',
-  meta: [{ name: 'description', content: 'Discover our products' }],
-});
+let shopTitle = 'Products';
+let shopDescription = 'Discover our products';
+let seoDataSet = false;
 
-// Server-side data loading
-const { data: initialData, error } = await useAsyncData('products-page', async () => {
-  try {
-    // Подготвяме филтрите за първоначално зареждане
-    const initialFilters = {
-      search: route.query.search as string,
-      categoryIn: route.query.category ? [route.query.category as string] : undefined,
-      priceMin: route.query.priceMin ? parseFloat(route.query.priceMin as string) : undefined,
-      priceMax: route.query.priceMax ? parseFloat(route.query.priceMax as string) : undefined,
-      onSale: route.query.sale === 'true' ? true : undefined,
-      orderby: (route.query.orderby as string) || 'DATE',
-      order: (route.query.order as string) || 'DESC',
-      rating: route.query.rating ? [parseInt(route.query.rating as string, 10)] : undefined,
-    };
+try {
+  // Зареждаме SEO данни за страницата с продукти
+  const { data: pagesData } = await useAsyncGql('getShopPage');
+  const productPage = pagesData.value?.page;
 
-    // Зареждаме продуктите
-    const currentPageNum = getCurrentPageFromRoute();
-    await loadProductsForPage(currentPageNum, initialFilters);
+  // Анализ на получената информация
+  if (!productPage) {
+    console.error('Не е намерена страница products в WordPress');
+  } else {
+    // Проверяваме дали имаме SEO данни
+    if (!productPage.seo) {
+      console.error('Страницата няма SEO данни от Yoast');
+    } else {
+      // Използваме SEO данните от Yoast
+      shopTitle = productPage.seo.title || productPage.title || 'Products';
+      shopDescription = productPage.seo.metaDesc || productPage.content || 'Discover our products';
 
-    return { success: true };
-  } catch (err) {
-    console.error('Грешка при зареждане на продукти:', err);
-    return { success: false, error: err };
-  }
-});
-
-// Зареждаме SEO данните САМО в браузъра
-onMounted(async () => {
-  try {
-    const { data: pagesData } = await useAsyncGql('getShopPage');
-    const productPage = pagesData.value?.page;
-
-    // Обновяваме SEO данните ако са налични
-    if (productPage?.seo) {
-      const seo = productPage.seo;
-      const shopTitle = seo?.title || productPage.title || 'Products';
-      const shopDescription = seo?.metaDesc || productPage.content || 'Discover our products';
-
+      // Задаваме SEO метаданните
       useHead({
         title: shopTitle,
         meta: [
           { name: 'description', content: shopDescription },
-          { property: 'og:title', content: seo?.opengraphTitle || shopTitle },
-          { property: 'og:description', content: seo?.opengraphDescription || shopDescription },
-          { name: 'robots', content: seo?.metaRobotsNoindex ? 'noindex' : 'index' },
-          { name: 'robots', content: seo?.metaRobotsNofollow ? 'nofollow' : 'follow' },
+          { property: 'og:title', content: productPage.seo.opengraphTitle || shopTitle },
+          { property: 'og:description', content: productPage.seo.opengraphDescription || shopDescription },
+          { name: 'robots', content: productPage.seo.metaRobotsNoindex ? 'noindex' : 'index' },
+          { name: 'robots', content: productPage.seo.metaRobotsNofollow ? 'nofollow' : 'follow' },
         ],
-        link: [{ rel: 'canonical', href: seo?.canonical || '/products' }],
+        link: [{ rel: 'canonical', href: productPage.seo.canonical || '/products' }],
       });
 
-      // Добавяне на структурирани данни
-      if (seo?.schema?.raw) {
+      // Добавяне на структурирани данни (schema.org)
+      if (productPage.seo.schema?.raw) {
         useHead({
           script: [
             {
               type: 'application/ld+json',
-              innerHTML: seo.schema.raw,
+              innerHTML: productPage.seo.schema.raw,
             },
           ],
         });
       }
+
+      seoDataSet = true; // Маркираме, че сме задали SEO данни
     }
-  } catch (error) {
-    console.warn('Не можахме да заредим SEO данните (очаквано при първо зареждане):', error);
+  }
+
+  // Ако не сме задали SEO данни, използваме резервни стойности
+  if (!seoDataSet) {
+    console.warn('Използваме резервни SEO данни за продуктовата страница');
+    useHead({
+      title: 'Products',
+      meta: [{ name: 'description', content: 'Discover our products' }],
+    });
+  }
+} catch (error) {
+  console.error('Грешка при зареждане на SEO данни:', error);
+
+  // Резервно решение
+  useHead({
+    title: 'Products',
+    meta: [{ name: 'description', content: 'Discover our products' }],
+  });
+}
+
+// Зареждаме първата страница с продукти с server-side pagination в onMounted
+const initialFilters = {
+  search: route.query.search as string,
+  categoryIn: route.query.category ? [route.query.category as string] : undefined,
+  priceMin: route.query.priceMin ? parseFloat(route.query.priceMin as string) : undefined,
+  priceMax: route.query.priceMax ? parseFloat(route.query.priceMax as string) : undefined,
+  onSale: route.query.sale === 'true' ? true : undefined,
+  orderby: (route.query.orderby as string) || 'DATE',
+};
+
+onMounted(async () => {
+  // Зареждаме продуктите след като компонентът е монтиран
+  const currentPageNum = getCurrentPageFromRoute();
+  await loadProductsForPage(currentPageNum, initialFilters);
+
+  // Ако има query параметри, обновяваме списъка
+  if (!isQueryEmpty.value) {
+    updateProductList();
   }
 });
 
-// Следим за промени в route за динамично обновяване
 watch(
   () => route.query,
   () => {
@@ -96,7 +111,7 @@ watch(
 </script>
 
 <template>
-  <div class="container flex items-start gap-16 px-2" v-if="!isLoading && products?.length">
+  <div class="container flex items-start gap-16 px-2" v-if="products?.length || true">
     <Filters v-if="storeSettings.showFilters" />
 
     <div class="w-full">
@@ -106,17 +121,6 @@ watch(
         <ShowFilterTrigger v-if="storeSettings.showFilters" class="md:hidden" />
       </div>
       <ProductGrid />
-    </div>
-  </div>
-  <div v-else-if="isLoading" class="py-16 text-center">
-    <div class="inline-block p-4 text-gray-500">
-      <div class="h-8 w-8 border-t-2 border-primary border-solid rounded-full mx-auto animate-spin mb-4"></div>
-      <p>Зареждане на продукти...</p>
-    </div>
-  </div>
-  <div v-else-if="error" class="py-16 text-center">
-    <div class="text-red-500">
-      <p>Грешка при зареждане на продукти. Моля опитайте отново.</p>
     </div>
   </div>
   <NoProductsFound v-else>Could not fetch products from your store. Please check your configuration.</NoProductsFound>

@@ -28,11 +28,9 @@ export default defineNuxtConfig({
   experimental: {
     sharedPrerenderData: true,
     buildCache: true,
-    typedPages: true,
     defaults: {
       nuxtLink: {
         prefetch: true,
-        prefetchOn: { interaction: true },
       },
     },
   },
@@ -80,55 +78,10 @@ export default defineNuxtConfig({
 
   nitro: {
     routeRules: {
-      // Страниците за checkout не трябва да се рендират server-side
       '/checkout/order-received/**': { ssr: false },
       '/order-summary/**': { ssr: false },
-
-      // Redirects от старите английски URL-и към българските
       '/product/**': { redirect: { to: '/produkt/**', statusCode: 301 } },
       '/product-category/**': { redirect: { to: '/produkt-kategoriya/**', statusCode: 301 } },
-
-      // Pagination страници - трябва SSR но не prerender
-      '/products/page/**': { ssr: true, prerender: false },
-      '/produkt-kategoriya/*/page/**': { ssr: true, prerender: false },
-
-      // Страници с query параметри (филтри, търсене) - трябва SSR но не prerender
-      '/products?*': { ssr: true, prerender: false },
-      '/produkt-kategoriya/*?*': { ssr: true, prerender: false },
-
-      // Основни страници - трябва да се prerender-ят
-      '/': { prerender: true },
-      '/products': {
-        ssr: true,
-        prerender: true,
-        // Добавям headers за по-добро cache-ване
-        headers: { 'Cache-Control': 's-maxage=1800, stale-while-revalidate=3600' },
-      },
-      '/produkt-kategoriya/**': {
-        ssr: true,
-        prerender: true,
-        // Cache за 1 час за категорийните страници
-        headers: { 'Cache-Control': 's-maxage=3600' },
-      },
-
-      // Продуктови страници - prerender само ако са статични
-      '/produkt/**': {
-        ssr: true,
-        prerender: true,
-        headers: { 'Cache-Control': 's-maxage=3600' },
-      },
-    },
-
-    // Контрол на generate процеса
-    prerender: {
-      // Crawl само основните страници, не следва dynamic routes автоматично
-      crawlLinks: false,
-      // Лимит на concurrent requests към GraphQL API по време на build
-      concurrency: 3,
-      // Ignore динамични routes с query параметри
-      ignore: ['/products?*', '/produkt-kategoriya/*?*', '/products/page/*', '/produkt-kategoriya/*/page/*'],
-      // Routes които да се prerender-ят
-      routes: ['/', '/products', '/checkout', '/my-account', '/contact', '/about'],
     },
   },
 

@@ -5,11 +5,52 @@ const { storeSettings } = useAppConfig();
 const route = useRoute();
 const slug = route.params.slug as string;
 
-// Задаваме базови SEO данни синхронно за SSR
-useHead({
-  title: 'Products',
-  meta: [{ name: 'description', content: 'Products in this category' }],
-});
+// Декларираме променливи за SEO
+let productCategory: any = null;
+let categoryTitle = 'Products';
+let categoryDescription = 'Products in this category';
+
+try {
+  // Получаване на данни за категорията и SEO информацията чрез getProductCategories
+  const { data: categoryData } = await useAsyncGql('getProductCategories', { first: 1, slug: [slug] });
+  productCategory = categoryData.value?.productCategories?.nodes?.[0] || null;
+
+  if (productCategory) {
+    // Използване на SEO данни от Yoast ако са налични
+    categoryTitle = productCategory.seo?.title || productCategory.name || 'Products';
+    categoryDescription = productCategory.seo?.metaDesc || productCategory.description || 'Products in this category';
+
+    useHead({
+      title: categoryTitle,
+      meta: [
+        { name: 'description', content: categoryDescription },
+        { property: 'og:title', content: productCategory.seo?.opengraphTitle || categoryTitle },
+        { property: 'og:description', content: productCategory.seo?.opengraphDescription || categoryDescription },
+      ],
+      link: [{ rel: 'canonical', href: productCategory.seo?.canonical || '' }],
+    });
+
+    // Добавяне на структурирани данни (schema.org) ако са налични в Yoast
+    if (productCategory.seo?.schema?.raw) {
+      useHead({
+        script: [
+          {
+            type: 'application/ld+json',
+            innerHTML: productCategory.seo.schema.raw,
+          },
+        ],
+      });
+    }
+  }
+} catch (error) {
+  console.error('Грешка при зареждане на SEO данни за категорията:', error);
+
+  // Резервни SEO данни
+  useHead({
+    title: categoryTitle,
+    meta: [{ name: 'description', content: categoryDescription }],
+  });
+}
 
 // Подготвяме филтрите за категорията
 const categoryFilters = {
@@ -22,61 +63,20 @@ const categoryFilters = {
 };
 
 onMounted(async () => {
-  try {
-    // Зареждаме SEO данни за категорията САМО в браузъра
-    const { data: categoryData } = await useAsyncGql('getProductCategories', { first: 1, slug: [slug] });
-    const productCategory = categoryData.value?.productCategories?.nodes?.[0] || null;
+  // Зареждаме продуктите за категорията с page-based pagination
+  const currentPageNum = getCurrentPageFromRoute();
+  await loadProductsForPage(currentPageNum, categoryFilters);
 
-    if (productCategory?.seo) {
-      // Използване на SEO данни от Yoast ако са налични
-      const categoryTitle = productCategory.seo?.title || productCategory.name || 'Products';
-      const categoryDescription = productCategory.seo?.metaDesc || productCategory.description || 'Products in this category';
-
-      useHead({
-        title: categoryTitle,
-        meta: [
-          { name: 'description', content: categoryDescription },
-          { property: 'og:title', content: productCategory.seo?.opengraphTitle || categoryTitle },
-          { property: 'og:description', content: productCategory.seo?.opengraphDescription || categoryDescription },
-        ],
-        link: [{ rel: 'canonical', href: productCategory.seo?.canonical || '' }],
-      });
-
-      // Добавяне на структурирани данни (schema.org) ако са налични в Yoast
-      if (productCategory.seo?.schema?.raw) {
-        useHead({
-          script: [
-            {
-              type: 'application/ld+json',
-              innerHTML: productCategory.seo.schema.raw,
-            },
-          ],
-        });
-      }
-    }
-  } catch (error) {
-    console.warn('Не можахме да заредим SEO данните за категорията (очаквано при първо зареждане):', error);
-    // Не правим нищо - вече имаме базови SEO данни
-  }
-
-  try {
-    // Зареждаме продуктите за категорията с page-based pagination
-    const currentPageNum = getCurrentPageFromRoute();
-    await loadProductsForPage(currentPageNum, categoryFilters);
-
-    // Ако има query параметри, обновяваме списъка
-    if (!isQueryEmpty.value) {
-      updateProductList();
-    }
-  } catch (error) {
-    console.error('Грешка при зареждане на продукти за категорията:', error);
+  // Ако има query параметри, обновяваме списъка
+  if (!isQueryEmpty.value) {
+    updateProductList();
   }
 });
 
 watch(
   () => route.query,
   () => {
-    if (route.name !== 'product-category-slug') return;
+    if (route.name !== 'produkt-kategoriya-slug') return;
     updateProductList();
   },
 );
@@ -84,7 +84,7 @@ watch(
 watch(
   () => route.params,
   () => {
-    if (route.name !== 'product-category-slug') return;
+    if (route.name !== 'produkt-kategoriya-slug') return;
     updateProductList();
   },
 );
