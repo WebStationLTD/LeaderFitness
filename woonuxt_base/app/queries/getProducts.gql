@@ -1,12 +1,53 @@
-query getProducts($after: String, $slug: [String], $first: Int = 9999, $orderby: ProductsOrderByEnum = DATE) {
+query getProducts(
+  $after: String
+  $before: String
+  $slug: [String]
+  $first: Int = 12
+  $last: Int
+  $search: String
+  $priceMin: Float
+  $priceMax: Float
+  $onSale: Boolean
+  $orderby: ProductsOrderByEnum = DATE
+) {
   products(
     first: $first
+    last: $last
     after: $after
-    where: { categoryIn: $slug, visibility: VISIBLE, minPrice: 0, orderby: { field: $orderby, order: DESC }, status: "publish" }
+    before: $before
+    where: {
+      categoryIn: $slug
+      search: $search
+      minPrice: $priceMin
+      maxPrice: $priceMax
+      onSale: $onSale
+      visibility: VISIBLE
+      status: "publish"
+      orderby: { field: $orderby, order: DESC }
+    }
   ) {
     pageInfo {
       hasNextPage
+      hasPreviousPage
+      startCursor
       endCursor
+    }
+    edges {
+      cursor
+      node {
+        name
+        slug
+        type
+        databaseId
+        id
+        averageRating
+        reviewCount
+        ...Terms
+        ...ProductCategories
+        ...SimpleProduct
+        ...VariableProduct
+        ...ExternalProduct
+      }
     }
     nodes {
       name

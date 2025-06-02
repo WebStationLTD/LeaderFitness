@@ -30,30 +30,11 @@ export function useSearching() {
     isShowingSearch.value = !isShowingSearch.value;
   };
 
+  // Server-side търсене се обработва автоматично в GraphQL заявката
+  // Тази функция вече не е нужна за филтриране на продуктите
   function searchProducts(products: Product[]): Product[] {
-    const name = route.name ?? 'products';
-    const search = getSearchQuery();
-
-    /**
-     * If we are on a category page, we need to add the category slug to the
-     * route, otherwise every search will redirect to the products page.
-     */
-    if (route.name === 'produkt-kategoriya-slug') {
-      const categorySlug = route.params.categorySlug as string;
-      router.push({ name, params: { categorySlug }, query: { ...route.query, search } });
-    } else {
-      router.push({ name: 'products', query: { ...route.query, search } });
-    }
-
-    return search
-      ? products.filter((product: Product) => {
-          const name = product.name?.toLowerCase();
-          const description = product.description ? product.description.toLowerCase() : null;
-          const shortDescription = product.shortDescription ? product.shortDescription.toLowerCase() : null;
-          const query = search.toLowerCase();
-          return name?.includes(query) ?? description?.includes(query) ?? shortDescription?.includes(query);
-        })
-      : products;
+    // Връщаме продуктите就好像 са, защото търсенето се прави на сървъра
+    return products;
   }
 
   return { getSearchQuery, setSearchQuery, clearSearchQuery, searchProducts, isSearchActive, isShowingSearch, toggleSearch };

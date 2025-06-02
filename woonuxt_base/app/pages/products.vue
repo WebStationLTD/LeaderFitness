@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { setProducts, updateProductList, products } = useProducts();
+const { loadProducts, updateProductList, products } = useProducts();
 const route = useRoute();
 const { storeSettings } = useAppConfig();
 const { isQueryEmpty } = useHelpers();
@@ -72,13 +72,24 @@ try {
   });
 }
 
-// Получаване на всички продукти
-const { data } = await useAsyncGql('getProducts');
-const allProducts = data.value?.products?.nodes as Product[];
-setProducts(allProducts);
+// Зареждаме първата страница с продукти с server-side pagination в onMounted
+const initialFilters = {
+  search: route.query.search as string,
+  categoryIn: route.query.category ? [route.query.category as string] : undefined,
+  priceMin: route.query.priceMin ? parseFloat(route.query.priceMin as string) : undefined,
+  priceMax: route.query.priceMax ? parseFloat(route.query.priceMax as string) : undefined,
+  onSale: route.query.sale === 'true' ? true : undefined,
+  orderby: (route.query.orderby as string) || 'DATE',
+};
 
-onMounted(() => {
-  if (!isQueryEmpty.value) updateProductList();
+onMounted(async () => {
+  // Зареждаме продуктите след като компонентът е монтиран
+  await loadProducts(initialFilters, 'first');
+
+  // Ако има query параметри, обновяваме списъка
+  if (!isQueryEmpty.value) {
+    updateProductList();
+  }
 });
 
 watch(
@@ -91,7 +102,7 @@ watch(
 </script>
 
 <template>
-  <div class="container flex items-start gap-16 px-2" v-if="allProducts?.length">
+  <div class="container flex items-start gap-16 px-2" v-if="products?.length || true">
     <Filters v-if="storeSettings.showFilters" />
 
     <div class="w-full">

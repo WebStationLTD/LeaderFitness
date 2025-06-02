@@ -1,12 +1,17 @@
 <script setup lang="ts">
-const { allProducts } = useProducts();
+const { totalProducts } = useProducts();
 const { clearSearchQuery } = useSearching();
 const { resetFilter } = useFiltering();
+const { isFiltersActive } = useFiltering();
+const { isSearchActive } = useSearching();
 
 const clearAll = () => {
   resetFilter();
   clearSearchQuery();
 };
+
+// Показваме clear бутона само ако има активни филтри или търсене
+const hasActiveFilters = computed(() => isFiltersActive.value || isSearchActive.value);
 </script>
 
 <template>
@@ -19,7 +24,7 @@ const clearAll = () => {
       </p>
       <div>
         <button
-          v-if="allProducts.length"
+          v-if="hasActiveFilters"
           class="bg-primary rounded-lg font-bold mt-8 text-center text-white text-sm w-full p-2 px-3 inline-block hover:bg-primary-dark"
           :title="$t('messages.shop.noProductsFound.clearFiltersAndSearch')"
           aria-label="Clear all filters and search"

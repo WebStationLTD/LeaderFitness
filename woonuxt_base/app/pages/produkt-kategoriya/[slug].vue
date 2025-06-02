@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch, computed } from 'vue';
 
-const { setProducts, updateProductList, products } = useProducts();
+const { setProducts, updateProductList, products, loadProducts } = useProducts();
 const { isQueryEmpty } = useHelpers();
 const { storeSettings } = useAppConfig();
 const route = useRoute();
@@ -111,67 +111,53 @@ if (slug.value) {
   console.log('Намерена категория:', matchingCategory.value);
 }
 
-// Ако имаме категория, зареждаме продуктите
+// Ако имаме категория, зареждаме продуктите с новия подход
 if (matchingCategory.value && matchingCategory.value.slug) {
   try {
-    const { data: productsData } = await useAsyncGql('getProducts', { slug: [matchingCategory.value.slug] });
-    const categoryProducts = productsData.value?.products?.nodes || [];
+    const categoryFilters = {
+      categoryIn: [matchingCategory.value.slug],
+      search: route.query.search as string,
+      priceMin: route.query.priceMin ? parseFloat(route.query.priceMin as string) : undefined,
+      priceMax: route.query.priceMax ? parseFloat(route.query.priceMax as string) : undefined,
+      onSale: route.query.sale === 'true' ? true : undefined,
+      orderby: (route.query.orderby as string) || 'DATE',
+    };
 
-    if (categoryProducts && categoryProducts.length > 0) {
-      console.log(`Заредени ${categoryProducts.length} продукта от категория ${matchingCategory.value.slug}`);
-      setProducts(categoryProducts);
-    } else {
-      // Ако нямаме продукти директно, опитваме да заредим всички и филтрираме
-      console.log('Опитваме филтриране по категория ID');
-      const { data: allProductsData } = await useAsyncGql('getProducts');
-      const allProducts = allProductsData.value?.products?.nodes || [];
-
-      if (allProducts && allProducts.length > 0) {
-        console.log(`Заредени ${allProducts.length} общо продукта, филтрираме по категория ID`);
-
-        // Филтриране по категория ID
-        if (matchingCategory.value && matchingCategory.value.databaseId) {
-          const filteredProducts = allProducts.filter((product: any) =>
-            product.productCategories?.nodes?.some((cat: any) => cat.databaseId === matchingCategory.value?.databaseId),
-          );
-
-          console.log(`Филтрирани ${filteredProducts.length} продукта по категория ID`);
-
-          if (filteredProducts.length > 0) {
-            setProducts(filteredProducts);
-          } else {
-            setProducts([]);
-          }
-        } else {
-          setProducts([]);
-        }
-      } else {
-        setProducts([]);
-      }
-    }
+    await loadProducts(categoryFilters, 'first');
+    console.log(`Заредени продукти от категория ${matchingCategory.value.slug} с pagination`);
   } catch (error) {
     console.error('Грешка при зареждане на продукти:', error);
-    setProducts([]);
   }
 } else if (slug.value) {
   // Нямаме намерена категория, но опитваме директно със slug-а
   try {
-    const { data: productsData } = await useAsyncGql('getProducts', { slug: [slug.value] });
-    const categoryProducts = productsData.value?.products?.nodes || [];
-    setProducts(categoryProducts || []);
+    const categoryFilters = {
+      categoryIn: [slug.value],
+      search: route.query.search as string,
+      priceMin: route.query.priceMin ? parseFloat(route.query.priceMin as string) : undefined,
+      priceMax: route.query.priceMax ? parseFloat(route.query.priceMax as string) : undefined,
+      onSale: route.query.sale === 'true' ? true : undefined,
+      orderby: (route.query.orderby as string) || 'DATE',
+    };
+
+    await loadProducts(categoryFilters, 'first');
   } catch (error) {
     console.error('Грешка при зареждане на продукти по slug:', error);
-    setProducts([]);
   }
 } else {
-  // Ако нямаме slug, зареждаме всички продукти
+  // Ако нямаме slug, зареждаме първата страница без категория филтър
   try {
-    const { data: allProductsData } = await useAsyncGql('getProducts');
-    const allProducts = allProductsData.value?.products?.nodes || [];
-    setProducts(allProducts || []);
+    const generalFilters = {
+      search: route.query.search as string,
+      priceMin: route.query.priceMin ? parseFloat(route.query.priceMin as string) : undefined,
+      priceMax: route.query.priceMax ? parseFloat(route.query.priceMax as string) : undefined,
+      onSale: route.query.sale === 'true' ? true : undefined,
+      orderby: (route.query.orderby as string) || 'DATE',
+    };
+
+    await loadProducts(generalFilters, 'first');
   } catch (error) {
     console.error('Грешка при зареждане на всички продукти:', error);
-    setProducts([]);
   }
 }
 

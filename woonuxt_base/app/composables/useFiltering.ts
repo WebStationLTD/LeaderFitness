@@ -95,44 +95,14 @@ export function useFiltering() {
   const isFiltersActive = computed<boolean>(() => !!filterQuery.value);
 
   /**
-   * Filter the products based on the active filters
+   * Server-side филтриране се обработва автоматично в GraphQL заявката
+   * Тази функция вече не е нужна за филтриране на продуктите
    * @param {Product[]} products - An array of all the products
    * @returns {Product[]} - An array of filtered products
    */
   function filterProducts(products: Product[]): Product[] {
-    return products.filter((product) => {
-      // Category filter
-      const category = getFilter('category') || []; // ["category-slug"]
-      const categoryCondition = category.length ? product.productCategories?.nodes?.find((node) => category.includes(node.slug as string)) : true;
-
-      // price filter
-      const priceRange = getFilter('price') || []; // ["0", "100"]
-      // Variable products returns an array of prices, so we need to find the highest price.
-      const productPrice = product.rawPrice ? parseFloat([...product.rawPrice.split(',')].reduce((a, b) => String(Math.max(Number(a), Number(b))))) : 0;
-      const priceCondition = priceRange.length
-        ? productPrice >= parseFloat(priceRange[0] as string) && productPrice <= parseFloat(priceRange[1] as string)
-        : true;
-
-      // Star rating filter
-      const starRating = getFilter('rating') || [];
-      const ratingCondition = starRating.length ? (product?.averageRating || 0) >= parseFloat(starRating[0] as string) : true;
-
-      // Product attribute filters
-      const globalProductAttributes = runtimeConfig?.public?.GLOBAL_PRODUCT_ATTRIBUTES?.map((attribute: any) => attribute.slug) || [];
-      const attributeCondition = globalProductAttributes
-        .map((attribute: string) => {
-          const attributeValues = getFilter(attribute) || [];
-          if (!attributeValues.length) return true;
-          return product.terms?.nodes?.find((node: any) => node.taxonomyName === attribute && attributeValues.includes(node.slug));
-        })
-        .every((condition: any) => condition);
-
-      // onSale filter
-      const onSale = getFilter('sale');
-      const saleItemsOnlyCondition = onSale.length ? product.onSale : true;
-
-      return ratingCondition && priceCondition && attributeCondition && categoryCondition && saleItemsOnlyCondition;
-    });
+    // Връщаме продуктите就好像 са, защото филтрирането се прави на сървъра
+    return products;
   }
 
   return { getFilter, setFilter, resetFilter, isFiltersActive, filterProducts };
