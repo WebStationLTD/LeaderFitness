@@ -1,0 +1,1 @@
+{"id":"1bf5f04e-6de7-44e3-b8fc-902177f7334b","timestamp":1748867744116,"matcher":{"static":{},"wildcard":{"/product":{"redirect":"/produkt/**"},"/product-category":{"redirect":"/produkt-kategoriya/**"}},"dynamic":{}},"prerendered":["/contact","/products","/categories","/"]}

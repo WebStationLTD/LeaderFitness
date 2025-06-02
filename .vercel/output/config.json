@@ -4,17 +4,11 @@
     "contact/index.html": {
       "path": "contact"
     },
-    "my-account/index.html": {
-      "path": "my-account"
-    },
-    "checkout/index.html": {
-      "path": "checkout"
+    "products/index.html": {
+      "path": "products"
     },
     "categories/index.html": {
       "path": "categories"
-    },
-    "products/index.html": {
-      "path": "products"
     },
     "index.html": {
       "path": ""
@@ -55,24 +49,6 @@
     },
     {
       "headers": {
-        "Cache-Control": "s-maxage=1800, stale-while-revalidate=3600"
-      },
-      "src": "/products"
-    },
-    {
-      "headers": {
-        "Cache-Control": "s-maxage=3600"
-      },
-      "src": "/produkt-kategoriya/(.*)"
-    },
-    {
-      "headers": {
-        "Cache-Control": "s-maxage=3600"
-      },
-      "src": "/produkt/(.*)"
-    },
-    {
-      "headers": {
         "cache-control": "public, max-age=31536000, immutable"
       },
       "src": "/_nuxt/(.*)"
@@ -110,20 +86,20 @@
       "dest": "/__nitro"
     },
     {
-      "src": "(?<url>/produkt-kategoriya/.*)",
-      "dest": "/__nitro--produkt-kategoriya?url=$url"
-    },
-    {
-      "src": "(?<url>/produkt/.*)",
-      "dest": "/__nitro--produkt?url=$url"
-    },
-    {
       "src": "/categories",
       "dest": "/__nitro"
     },
     {
       "src": "/contact",
       "dest": "/__nitro"
+    },
+    {
+      "src": "(?<url>/produkt/.*)",
+      "dest": "/__nitro--produkt?url=$url"
+    },
+    {
+      "src": "(?<url>/produkt-kategoriya/.*)",
+      "dest": "/__nitro--produkt-kategoriya?url=$url"
     },
     {
       "src": "(?<url>/checkout/.*)",
