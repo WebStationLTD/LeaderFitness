@@ -158,6 +158,7 @@ export function useProducts() {
   async function loadProductsCount(filters: PaginationFilters = {}): Promise<void> {
     try {
       const countVariables: any = {
+        first: 1000, // Зареждаме много продукти за да получим точния брой
         search: filters.search || undefined,
         slug: filters.categoryIn?.length ? filters.categoryIn : undefined,
         priceMin: filters.priceMin || undefined,
@@ -168,15 +169,21 @@ export function useProducts() {
         rating: filters.rating?.length ? filters.rating : undefined,
       };
 
-      const { data: countData } = await useAsyncGql('getProductsCount' as any, countVariables);
+      const { data: countData } = await useAsyncGql('getProducts' as any, countVariables);
 
-      if (countData.value?.products?.edges) {
-        totalProducts.value = countData.value.products.edges.length;
+      if (countData.value?.products?.nodes) {
+        totalProducts.value = countData.value.products.nodes.length;
+
+        // Ако имаме точно 1000, вероятно има повече
+        if (totalProducts.value === 1000 && countData.value.products.pageInfo?.hasNextPage) {
+          // В този случай използваме приблизителна стойност
+          totalProducts.value = countData.value.products.pageInfo.total || 1000;
+        }
       }
     } catch (error) {
       console.error('Грешка при зареждане на общ брой продукти:', error);
-      // При грешка задаваме приблизителна стойност базирана на pagination
-      totalProducts.value = 0;
+      // При грешка задаваме приблизителна стойност базирана на текущите продукти
+      totalProducts.value = products.value.length || 0;
     }
   }
 
@@ -229,7 +236,7 @@ export function useProducts() {
 
     // Проверяваме дали сме в категорийна страница
     if (route.name === 'produkt-kategoriya-slug' || route.name === 'produkt-kategoriya-page-pager') {
-      categorySlug = (route.params.categorySlug || route.params.slug) as string;
+      categorySlug = ((route.params as any).categorySlug || (route.params as any).slug) as string;
     } else if (route.name === 'product-category-slug' || route.name === 'product-category-page-pager') {
       categorySlug = route.params.slug as string;
     }
@@ -274,7 +281,7 @@ export function useProducts() {
    */
   function getCurrentPageFromRoute(): number {
     const route = useRoute();
-    const pageParam = route.params.pageNumber;
+    const pageParam = (route.params as any).pageNumber;
     if (pageParam && typeof pageParam === 'string') {
       const pageNum = parseInt(pageParam, 10);
       return pageNum > 0 ? pageNum : 1;
@@ -291,7 +298,7 @@ export function useProducts() {
 
     // Ако сме на категория страница
     if (route.name === 'produkt-kategoriya-slug' || route.name === 'produkt-kategoriya-page-pager') {
-      const categorySlug = route.params.categorySlug || route.params.slug;
+      const categorySlug = (route.params as any).categorySlug || (route.params as any).slug;
       if (pageNumber === 1) {
         return `/produkt-kategoriya/${categorySlug}${Object.keys(query).length ? '?' + new URLSearchParams(query as any).toString() : ''}`;
       } else {

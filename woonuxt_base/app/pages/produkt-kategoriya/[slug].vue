@@ -1,24 +1,21 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
+import { ref, watch } from 'vue';
 
-const { loadProductsForPage, updateProductList, products, getCurrentPageFromRoute } = useProducts();
+const { loadProductsForPage, updateProductList, products, getCurrentPageFromRoute, isLoading } = useProducts();
 const { isQueryEmpty } = useHelpers();
 const { storeSettings } = useAppConfig();
 const route = useRoute();
-
-// За да контролираме показването на компонентите
-const isLoading = ref(true);
 
 // Извличане на slug параметъра от route параметрите
 let slugFromParams = '';
 
 // За page-based маршрути използваме categorySlug параметъра
-if (route.params && route.params.categorySlug) {
+if (route.params && 'categorySlug' in route.params && route.params.categorySlug) {
   slugFromParams = typeof route.params.categorySlug === 'string' ? route.params.categorySlug : String(route.params.categorySlug);
 }
 
 // Резервен вариант - използваме slug параметъра
-if (!slugFromParams && route.params && route.params.slug) {
+if (!slugFromParams && route.params && 'slug' in route.params && route.params.slug) {
   slugFromParams = typeof route.params.slug === 'string' ? route.params.slug : String(route.params.slug);
 }
 
@@ -85,9 +82,24 @@ useHead({
   meta: [{ name: 'description', content: categoryDescription.value }],
 });
 
+// Зареждаме продуктите ВЕДНАГА с категорийния филтър
+const categoryFilters = computed(() => ({
+  categoryIn: slug.value ? [slug.value] : undefined,
+  search: route.query.search as string,
+  priceMin: route.query.priceMin ? parseFloat(route.query.priceMin as string) : undefined,
+  priceMax: route.query.priceMax ? parseFloat(route.query.priceMax as string) : undefined,
+  onSale: route.query.sale === 'true' ? true : undefined,
+  orderby: (route.query.orderby as string) || 'DATE',
+  order: (route.query.order as string) || 'DESC',
+  rating: route.query.rating ? [parseInt(route.query.rating as string, 10)] : undefined,
+}));
+
+const currentPageNum = getCurrentPageFromRoute();
+await loadProductsForPage(currentPageNum, categoryFilters.value);
+
+// Зареждаме категорийните данни и SEO САМО в браузъра
 onMounted(async () => {
   try {
-    // Зареждаме категориите САМО в браузъра
     const { data: categoriesData } = await useAsyncGql('getProductCategories');
     const allCategories = categoriesData.value?.productCategories?.nodes || [];
 
@@ -129,58 +141,6 @@ onMounted(async () => {
   } catch (error) {
     console.warn('Не можахме да заредим категориите (очаквано при първо зареждане):', error);
   }
-
-  try {
-    // Ако имаме категория, зареждаме продуктите с новия подход
-    if (matchingCategory.value && matchingCategory.value.slug) {
-      const categoryFilters = {
-        categoryIn: [matchingCategory.value.slug],
-        search: route.query.search as string,
-        priceMin: route.query.priceMin ? parseFloat(route.query.priceMin as string) : undefined,
-        priceMax: route.query.priceMax ? parseFloat(route.query.priceMax as string) : undefined,
-        onSale: route.query.sale === 'true' ? true : undefined,
-        orderby: (route.query.orderby as string) || 'DATE',
-      };
-
-      const currentPageNum = getCurrentPageFromRoute();
-      await loadProductsForPage(currentPageNum, categoryFilters);
-    } else if (slug.value) {
-      // Нямаме намерена категория, но опитваме директно със slug-а
-      const categoryFilters = {
-        categoryIn: [slug.value],
-        search: route.query.search as string,
-        priceMin: route.query.priceMin ? parseFloat(route.query.priceMin as string) : undefined,
-        priceMax: route.query.priceMax ? parseFloat(route.query.priceMax as string) : undefined,
-        onSale: route.query.sale === 'true' ? true : undefined,
-        orderby: (route.query.orderby as string) || 'DATE',
-      };
-
-      const currentPageNum = getCurrentPageFromRoute();
-      await loadProductsForPage(currentPageNum, categoryFilters);
-    } else {
-      // Ако нямаме slug, зареждаме първата страница без категория филтър
-      const generalFilters = {
-        search: route.query.search as string,
-        priceMin: route.query.priceMin ? parseFloat(route.query.priceMin as string) : undefined,
-        priceMax: route.query.priceMax ? parseFloat(route.query.priceMax as string) : undefined,
-        onSale: route.query.sale === 'true' ? true : undefined,
-        orderby: (route.query.orderby as string) || 'DATE',
-      };
-
-      const currentPageNum = getCurrentPageFromRoute();
-      await loadProductsForPage(currentPageNum, generalFilters);
-    }
-
-    // Ако има query параметри, обновяваме списъка
-    if (!isQueryEmpty.value) {
-      updateProductList();
-    }
-  } catch (error) {
-    console.error('Грешка при зареждане на продукти:', error);
-  }
-
-  // Преминаваме към режим "зареден"
-  isLoading.value = false;
 });
 
 // Следим за промени в заявката и параметрите
@@ -218,7 +178,7 @@ watch(
     <div v-else-if="isLoading" class="py-16 text-center">
       <div class="inline-block p-4 text-gray-500">
         <div class="h-8 w-8 border-t-2 border-primary border-solid rounded-full mx-auto animate-spin mb-4"></div>
-        <p>Loading products...</p>
+        <p>Зареждане на продукти...</p>
       </div>
     </div>
     <NoProductsFound v-else>

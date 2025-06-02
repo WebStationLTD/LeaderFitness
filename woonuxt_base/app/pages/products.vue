@@ -1,5 +1,5 @@
 <script setup lang="ts">
-const { loadProductsForPage, updateProductList, products, getCurrentPageFromRoute } = useProducts();
+const { loadProductsForPage, updateProductList, products, getCurrentPageFromRoute, isLoading } = useProducts();
 const route = useRoute();
 const { storeSettings } = useAppConfig();
 const { isQueryEmpty } = useHelpers();
@@ -10,10 +10,25 @@ useHead({
   meta: [{ name: 'description', content: 'Discover our products' }],
 });
 
-// Зареждаме данните САМО в браузъра
+// Подготвяме филтрите за първоначално зареждане
+const initialFilters = computed(() => ({
+  search: route.query.search as string,
+  categoryIn: route.query.category ? [route.query.category as string] : undefined,
+  priceMin: route.query.priceMin ? parseFloat(route.query.priceMin as string) : undefined,
+  priceMax: route.query.priceMax ? parseFloat(route.query.priceMax as string) : undefined,
+  onSale: route.query.sale === 'true' ? true : undefined,
+  orderby: (route.query.orderby as string) || 'DATE',
+  order: (route.query.order as string) || 'DESC',
+  rating: route.query.rating ? [parseInt(route.query.rating as string, 10)] : undefined,
+}));
+
+// Зареждаме продуктите ВЕДНАГА при инициализация
+const currentPageNum = getCurrentPageFromRoute();
+await loadProductsForPage(currentPageNum, initialFilters.value);
+
+// Зареждаме SEO данните САМО в браузъра
 onMounted(async () => {
   try {
-    // Зареждаме SEO данни САМО в браузъра
     const { data: pagesData } = await useAsyncGql('getShopPage');
     const productPage = pagesData.value?.page;
 
@@ -50,29 +65,6 @@ onMounted(async () => {
   } catch (error) {
     console.warn('Не можахме да заредим SEO данните (очаквано при първо зареждане):', error);
   }
-
-  try {
-    // Подготвяме филтрите
-    const initialFilters = {
-      search: route.query.search as string,
-      categoryIn: route.query.category ? [route.query.category as string] : undefined,
-      priceMin: route.query.priceMin ? parseFloat(route.query.priceMin as string) : undefined,
-      priceMax: route.query.priceMax ? parseFloat(route.query.priceMax as string) : undefined,
-      onSale: route.query.sale === 'true' ? true : undefined,
-      orderby: (route.query.orderby as string) || 'DATE',
-    };
-
-    // Зареждаме продуктите
-    const currentPageNum = getCurrentPageFromRoute();
-    await loadProductsForPage(currentPageNum, initialFilters);
-
-    // Ако има query параметри, обновяваме списъка
-    if (!isQueryEmpty.value) {
-      await updateProductList();
-    }
-  } catch (error) {
-    console.error('Грешка при зареждане на продукти:', error);
-  }
 });
 
 // Следим за промени в route за динамично обновяване
@@ -94,7 +86,7 @@ watch(
 </script>
 
 <template>
-  <div class="container flex items-start gap-16 px-2" v-if="products?.length || true">
+  <div class="container flex items-start gap-16 px-2" v-if="!isLoading && products?.length">
     <Filters v-if="storeSettings.showFilters" />
 
     <div class="w-full">
@@ -104,6 +96,12 @@ watch(
         <ShowFilterTrigger v-if="storeSettings.showFilters" class="md:hidden" />
       </div>
       <ProductGrid />
+    </div>
+  </div>
+  <div v-else-if="isLoading" class="py-16 text-center">
+    <div class="inline-block p-4 text-gray-500">
+      <div class="h-8 w-8 border-t-2 border-primary border-solid rounded-full mx-auto animate-spin mb-4"></div>
+      <p>Зареждане на продукти...</p>
     </div>
   </div>
   <NoProductsFound v-else>Could not fetch products from your store. Please check your configuration.</NoProductsFound>

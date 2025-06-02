@@ -1,0 +1,1 @@
+import{ao as o,c as a,o as l,t as i,a as s}from"./CyBGr-YO.js";const m={__name:"ResetFiltersButton",setup(u){const{resetFilter:t}=o();return(r,e)=>(l(),a("button",{class:"bg-primary rounded-lg font-bold mt-8 text-center text-white text-sm w-full p-2",onClick:e[0]||(e[0]=(...n)=>s(t)&&s(t)(...n))},i(r.$t("messages.general.clearFilters")),1))}};export{m as default};

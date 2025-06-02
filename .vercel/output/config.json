@@ -1,14 +1,14 @@
 {
   "version": 3,
   "overrides": {
+    "contact/index.html": {
+      "path": "contact"
+    },
     "my-account/index.html": {
       "path": "my-account"
     },
     "checkout/index.html": {
       "path": "checkout"
-    },
-    "contact/index.html": {
-      "path": "contact"
     },
     "categories/index.html": {
       "path": "categories"
