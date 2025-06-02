@@ -10,47 +10,38 @@ useHead({
   meta: [{ name: 'description', content: 'Discover our products' }],
 });
 
-// Зареждаме първата страница с продукти с server-side pagination в onMounted
-const initialFilters = {
-  search: route.query.search as string,
-  categoryIn: route.query.category ? [route.query.category as string] : undefined,
-  priceMin: route.query.priceMin ? parseFloat(route.query.priceMin as string) : undefined,
-  priceMax: route.query.priceMax ? parseFloat(route.query.priceMax as string) : undefined,
-  onSale: route.query.sale === 'true' ? true : undefined,
-  orderby: (route.query.orderby as string) || 'DATE',
-};
-
+// Зареждаме данните САМО в браузъра
 onMounted(async () => {
   try {
-    // Зареждаме SEO данни за страницата с продукти САМО в браузъра
+    // Зареждаме SEO данни САМО в браузъра
     const { data: pagesData } = await useAsyncGql('getShopPage');
     const productPage = pagesData.value?.page;
 
-    // Ако имаме SEO данни, обновяваме title и meta
+    // Обновяваме SEO данните ако са налични
     if (productPage?.seo) {
-      const shopTitle = productPage.seo.title || productPage.title || 'Products';
-      const shopDescription = productPage.seo.metaDesc || productPage.content || 'Discover our products';
+      const seo = productPage.seo;
+      const shopTitle = seo?.title || productPage.title || 'Products';
+      const shopDescription = seo?.metaDesc || productPage.content || 'Discover our products';
 
-      // Обновяваме SEO метаданните
       useHead({
         title: shopTitle,
         meta: [
           { name: 'description', content: shopDescription },
-          { property: 'og:title', content: productPage.seo.opengraphTitle || shopTitle },
-          { property: 'og:description', content: productPage.seo.opengraphDescription || shopDescription },
-          { name: 'robots', content: productPage.seo.metaRobotsNoindex ? 'noindex' : 'index' },
-          { name: 'robots', content: productPage.seo.metaRobotsNofollow ? 'nofollow' : 'follow' },
+          { property: 'og:title', content: seo?.opengraphTitle || shopTitle },
+          { property: 'og:description', content: seo?.opengraphDescription || shopDescription },
+          { name: 'robots', content: seo?.metaRobotsNoindex ? 'noindex' : 'index' },
+          { name: 'robots', content: seo?.metaRobotsNofollow ? 'nofollow' : 'follow' },
         ],
-        link: [{ rel: 'canonical', href: productPage.seo.canonical || '/products' }],
+        link: [{ rel: 'canonical', href: seo?.canonical || '/products' }],
       });
 
-      // Добавяне на структурирани данни (schema.org)
-      if (productPage.seo.schema?.raw) {
+      // Добавяне на структурирани данни
+      if (seo?.schema?.raw) {
         useHead({
           script: [
             {
               type: 'application/ld+json',
-              innerHTML: productPage.seo.schema.raw,
+              innerHTML: seo.schema.raw,
             },
           ],
         });
@@ -58,23 +49,33 @@ onMounted(async () => {
     }
   } catch (error) {
     console.warn('Не можахме да заредим SEO данните (очаквано при първо зареждане):', error);
-    // Не правим нищо - вече имаме базови SEO данни
   }
 
   try {
-    // Зареждаме продуктите след като компонентът е монтиран
+    // Подготвяме филтрите
+    const initialFilters = {
+      search: route.query.search as string,
+      categoryIn: route.query.category ? [route.query.category as string] : undefined,
+      priceMin: route.query.priceMin ? parseFloat(route.query.priceMin as string) : undefined,
+      priceMax: route.query.priceMax ? parseFloat(route.query.priceMax as string) : undefined,
+      onSale: route.query.sale === 'true' ? true : undefined,
+      orderby: (route.query.orderby as string) || 'DATE',
+    };
+
+    // Зареждаме продуктите
     const currentPageNum = getCurrentPageFromRoute();
     await loadProductsForPage(currentPageNum, initialFilters);
 
     // Ако има query параметри, обновяваме списъка
     if (!isQueryEmpty.value) {
-      updateProductList();
+      await updateProductList();
     }
   } catch (error) {
     console.error('Грешка при зареждане на продукти:', error);
   }
 });
 
+// Следим за промени в route за динамично обновяване
 watch(
   () => route.query,
   () => {

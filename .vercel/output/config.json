@@ -1,0 +1,145 @@
+{
+  "version": 3,
+  "overrides": {
+    "my-account/index.html": {
+      "path": "my-account"
+    },
+    "checkout/index.html": {
+      "path": "checkout"
+    },
+    "contact/index.html": {
+      "path": "contact"
+    },
+    "categories/index.html": {
+      "path": "categories"
+    },
+    "products/index.html": {
+      "path": "products"
+    },
+    "index.html": {
+      "path": ""
+    }
+  },
+  "routes": [
+    {
+      "headers": {
+        "cache-control": "public, max-age=31536000, immutable"
+      },
+      "src": "/_nuxt/builds/meta/(.*)"
+    },
+    {
+      "headers": {
+        "Content-Type": "application/xslt+xml"
+      },
+      "src": "/__sitemap__/style.xsl"
+    },
+    {
+      "headers": {
+        "cache-control": "public, max-age=1, immutable"
+      },
+      "src": "/_nuxt/builds/(.*)"
+    },
+    {
+      "status": 301,
+      "headers": {
+        "Location": "/produkt/$1"
+      },
+      "src": "/product/(.*)"
+    },
+    {
+      "status": 301,
+      "headers": {
+        "Location": "/produkt-kategoriya/$1"
+      },
+      "src": "/product-category/(.*)"
+    },
+    {
+      "headers": {
+        "Cache-Control": "s-maxage=1800, stale-while-revalidate=3600"
+      },
+      "src": "/products"
+    },
+    {
+      "headers": {
+        "Cache-Control": "s-maxage=3600"
+      },
+      "src": "/produkt-kategoriya/(.*)"
+    },
+    {
+      "headers": {
+        "Cache-Control": "s-maxage=3600"
+      },
+      "src": "/produkt/(.*)"
+    },
+    {
+      "headers": {
+        "cache-control": "public, max-age=31536000, immutable"
+      },
+      "src": "/_nuxt/(.*)"
+    },
+    {
+      "src": "/_nuxt/builds/meta(.*)",
+      "headers": {
+        "cache-control": "public,max-age=31536000,immutable"
+      },
+      "continue": true
+    },
+    {
+      "src": "/_nuxt/builds(.*)",
+      "headers": {
+        "cache-control": "public,max-age=31536000,immutable"
+      },
+      "continue": true
+    },
+    {
+      "src": "/_nuxt(.*)",
+      "headers": {
+        "cache-control": "public,max-age=31536000,immutable"
+      },
+      "continue": true
+    },
+    {
+      "handle": "filesystem"
+    },
+    {
+      "src": "/__nuxt_error",
+      "dest": "/__nitro"
+    },
+    {
+      "src": "/products",
+      "dest": "/__nitro"
+    },
+    {
+      "src": "(?<url>/produkt-kategoriya/.*)",
+      "dest": "/__nitro--produkt-kategoriya?url=$url"
+    },
+    {
+      "src": "(?<url>/produkt/.*)",
+      "dest": "/__nitro--produkt?url=$url"
+    },
+    {
+      "src": "/categories",
+      "dest": "/__nitro"
+    },
+    {
+      "src": "/contact",
+      "dest": "/__nitro"
+    },
+    {
+      "src": "(?<url>/checkout/.*)",
+      "dest": "/__nitro"
+    },
+    {
+      "src": "/cart",
+      "dest": "/__nitro"
+    },
+    {
+      "src": "(?<url>/my-account/.*)",
+      "dest": "/__nitro"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/__nitro"
+    }
+  ]
+}

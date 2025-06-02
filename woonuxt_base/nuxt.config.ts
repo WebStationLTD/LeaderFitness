@@ -88,17 +88,22 @@ export default defineNuxtConfig({
       '/product/**': { redirect: { to: '/produkt/**', statusCode: 301 } },
       '/product-category/**': { redirect: { to: '/produkt-kategoriya/**', statusCode: 301 } },
 
-      // Pagination страници - не трябва да се prerender-ват но трябва SSR
+      // Pagination страници - трябва SSR но не prerender
       '/products/page/**': { ssr: true, prerender: false },
       '/produkt-kategoriya/*/page/**': { ssr: true, prerender: false },
 
-      // Страници с query параметри (филтри, търсене) - не трябва да се prerender-ват
+      // Страници с query параметри (филтри, търсене) - трябва SSR но не prerender
       '/products?*': { ssr: true, prerender: false },
       '/produkt-kategoriya/*?*': { ssr: true, prerender: false },
 
       // Основни страници - трябва да се prerender-ят
       '/': { prerender: true },
-      '/products': { prerender: true },
+      '/products': {
+        ssr: true,
+        prerender: true,
+        // Добавям headers за по-добро cache-ване
+        headers: { 'Cache-Control': 's-maxage=1800, stale-while-revalidate=3600' },
+      },
       '/produkt-kategoriya/**': {
         ssr: true,
         prerender: true,
