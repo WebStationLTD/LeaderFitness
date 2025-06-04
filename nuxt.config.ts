@@ -10,17 +10,29 @@ export default defineNuxtConfig({
   ],
 
   experimental: {
-    payloadExtraction: true,
-    renderJsonPayloads: true,
+    payloadExtraction: true
   },
 
   nitro: {
     preset: 'vercel',
     prerender: {
-      routes: ["/", "/products", "/categories", "/contact"],
-      crawlLinks: true,
-      concurrency: 5,
-      interval: 2000,
+      routes: [
+        "/",
+        "/products",
+        "/categories",
+        "/contact",
+        "/products/page/1",
+        "/products/page/2",
+        "/products/page/3",
+        "/products/page/4",
+        "/products/page/5",
+        "/products/page/6",
+        "/products/page/7",
+        "/products/page/8",
+        "/products/page/9",
+        "/products/page/10"
+      ],
+      crawlLinks: false,
       failOnError: false,
     },
     minify: true,
@@ -30,34 +42,28 @@ export default defineNuxtConfig({
       "/": { static: true },
       "/categories": { static: true },
       "/contact": { static: true },
+      "/products": { static: true },
+      "/products/page/[1-10]": { static: true },
 
-      // Dynamic routes with SSR and edge caching
-      "/produkt/**": { 
-        ssr: true,
-        swr: 3600, // 1 час между revalidations
-        cache: {
-          maxAge: 1800
-        }
-      },
-      "/products": { 
-        ssr: true,
-        swr: 3600,
-        cache: {
-          maxAge: 1800
-        }
-      },
+      // Dynamic pages with edge caching
       "/products/page/**": { 
-        ssr: true,
-        swr: 3600,
-        cache: {
-          maxAge: 1800
+        cors: true,
+        headers: {
+          'cache-control': 's-maxage=3600, stale-while-revalidate=86400'
+        }
+      },
+
+      // Product and category pages with edge caching
+      "/produkt/**": { 
+        cors: true,
+        headers: {
+          'cache-control': 's-maxage=3600, stale-while-revalidate=86400'
         }
       },
       "/produkt-kategoriya/**": { 
-        ssr: true,
-        swr: 3600,
-        cache: {
-          maxAge: 1800
+        cors: true,
+        headers: {
+          'cache-control': 's-maxage=3600, stale-while-revalidate=86400'
         }
       },
 
@@ -66,6 +72,7 @@ export default defineNuxtConfig({
       "/cart": { ssr: true, cache: false },
       "/my-account/**": { ssr: true, cache: false },
     },
+    timing: true,
     serverAssets: [{
       baseName: "public",
       dir: "public"

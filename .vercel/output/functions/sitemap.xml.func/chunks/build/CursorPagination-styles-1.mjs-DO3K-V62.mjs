@@ -1,2 +1,2 @@
-const t=".animate-spin[data-v-45ef4190]{animation:spin-45ef4190 1s linear infinite}@keyframes spin-45ef4190{0%{transform:rotate(0)}to{transform:rotate(1turn)}}";export{t as C};
+globalThis.__timing__.logStart("Load chunks/build/CursorPagination-styles-1-DO3K-V62.mjs");const a=".animate-spin[data-v-45ef4190]{animation:spin-45ef4190 1s linear infinite}@keyframes spin-45ef4190{0%{transform:rotate(0)}to{transform:rotate(1turn)}}";export{a as C};globalThis.__timing__.logEnd("Load chunks/build/CursorPagination-styles-1-DO3K-V62.mjs");
 //# sourceMappingURL=CursorPagination-styles-1.mjs-DO3K-V62.mjs.map

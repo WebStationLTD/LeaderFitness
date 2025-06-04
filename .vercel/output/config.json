@@ -1,428 +1,47 @@
 {
   "version": 3,
   "overrides": {
-    "products/index.html": {
-      "path": "products"
-    },
     "contact/index.html": {
       "path": "contact"
     },
     "categories/index.html": {
       "path": "categories"
     },
+    "products/index.html": {
+      "path": "products"
+    },
+    "products/page/8/index.html": {
+      "path": "products/page/8"
+    },
+    "products/page/9/index.html": {
+      "path": "products/page/9"
+    },
+    "products/page/10/index.html": {
+      "path": "products/page/10"
+    },
+    "products/page/1/index.html": {
+      "path": "products/page/1"
+    },
+    "products/page/2/index.html": {
+      "path": "products/page/2"
+    },
+    "products/page/4/index.html": {
+      "path": "products/page/4"
+    },
+    "products/page/5/index.html": {
+      "path": "products/page/5"
+    },
+    "products/page/6/index.html": {
+      "path": "products/page/6"
+    },
+    "products/page/3/index.html": {
+      "path": "products/page/3"
+    },
+    "products/page/7/index.html": {
+      "path": "products/page/7"
+    },
     "index.html": {
       "path": ""
-    },
-    "blog/index.html": {
-      "path": "blog"
-    },
-    "wishlist/index.html": {
-      "path": "wishlist"
-    },
-    "my-account/index.html": {
-      "path": "my-account/"
-    },
-    "checkout/index.html": {
-      "path": "checkout"
-    },
-    "thank-you/index.html": {
-      "path": "thank-you"
-    },
-    "order-summary/index.html": {
-      "path": "order-summary"
-    },
-    "privacy-policy/index.html": {
-      "path": "privacy-policy"
-    },
-    "produkt-kategoriya/аксесоари-за-бойни-спортове/index.html": {
-      "path": "produkt-kategoriya/аксесоари-за-бойни-спортове"
-    },
-    "produkt-kategoriya/без-категория/index.html": {
-      "path": "produkt-kategoriya/без-категория"
-    },
-    "produkt-kategoriya/бинтове-за-бокс/index.html": {
-      "path": "produkt-kategoriya/бинтове-за-бокс"
-    },
-    "produkt-kategoriya/бокс/index.html": {
-      "path": "produkt-kategoriya/бокс"
-    },
-    "produkt-kategoriya/боксов-чувал/index.html": {
-      "path": "produkt-kategoriya/боксов-чувал"
-    },
-    "produkt-kategoriya/боксови-ръкавици/index.html": {
-      "path": "produkt-kategoriya/боксови-ръкавици"
-    },
-    "produkt-kategoriya/бягаща-пътека/index.html": {
-      "path": "produkt-kategoriya/бягаща-пътека"
-    },
-    "produkt-kategoriya/велоергометри/index.html": {
-      "path": "produkt-kategoriya/велоергометри"
-    },
-    "produkt-kategoriya/въжета-за-скачане/index.html": {
-      "path": "produkt-kategoriya/въжета-за-скачане"
-    },
-    "produkt-kategoriya/гребни-тренажори/index.html": {
-      "path": "produkt-kategoriya/гребни-тренажори"
-    },
-    "my-account/lost-password/index.html": {
-      "path": "my-account/lost-password"
-    },
-    "produkt/велоергометър-endurance-upright-bike-b5u/index.html": {
-      "path": "produkt/велоергометър-endurance-upright-bike-b5u"
-    },
-    "produkt/боксов-чувал-leone-king-size-60кг-black-gold/index.html": {
-      "path": "produkt/боксов-чувал-leone-king-size-60кг-black-gold"
-    },
-    "produkt/шорти-hayabusa-icon-mid-thigh-black/index.html": {
-      "path": "produkt/шорти-hayabusa-icon-mid-thigh-black"
-    },
-    "produkt/спортен-сак-раница-venum-training-camp-4-0-black-neo-green/index.html": {
-      "path": "produkt/спортен-сак-раница-venum-training-camp-4-0-black-neo-green"
-    },
-    "produkt/лежанка-за-фитнес-регулируема-evolve-econ-ec-117/index.html": {
-      "path": "produkt/лежанка-за-фитнес-регулируема-evolve-econ-ec-117"
-    },
-    "produkt/бягаща-пътека-vision-t600/index.html": {
-      "path": "produkt/бягаща-пътека-vision-t600"
-    },
-    "produkt/боксови-ръкавици-leone-the-greatest-red/index.html": {
-      "path": "produkt/боксови-ръкавици-leone-the-greatest-red"
-    },
-    "blog/боксови-ръкавици-за-тренировки-с-чува/index.html": {
-      "path": "blog/боксови-ръкавици-за-тренировки-с-чува"
-    },
-    "blog/материали-за-боксови-ръкавици/index.html": {
-      "path": "blog/материали-за-боксови-ръкавици"
-    },
-    "blog/поддръжка-и-почистване-на-боксови-рък/index.html": {
-      "path": "blog/поддръжка-и-почистване-на-боксови-рък"
-    },
-    "blog/боксови-ръкавици-за-спаринг/index.html": {
-      "path": "blog/боксови-ръкавици-за-спаринг"
-    },
-    "blog/как-да-избегнем-травми-с-боксови-ръкав/index.html": {
-      "path": "blog/как-да-избегнем-травми-с-боксови-ръкав"
-    },
-    "blog/муай-тай-и-бокс-разлика-при-боксовите-р/index.html": {
-      "path": "blog/муай-тай-и-бокс-разлика-при-боксовите-р"
-    },
-    "blog/основни-фактори-при-избора-на-размер-з/index.html": {
-      "path": "blog/основни-фактори-при-избора-на-размер-з"
-    },
-    "blog/научете-как-да-изберете-правилните-бо/index.html": {
-      "path": "blog/научете-как-да-изберете-правилните-бо"
-    },
-    "blog/фитнес-уреди-за-рехабилитация-и-възст/index.html": {
-      "path": "blog/фитнес-уреди-за-рехабилитация-и-възст"
-    },
-    "blog/поддръжка-и-почистване-на-фитнес-уред/index.html": {
-      "path": "blog/поддръжка-и-почистване-на-фитнес-уред"
-    },
-    "blog/как-да-изберем-фитнес-уреди-ръковод/index.html": {
-      "path": "blog/как-да-изберем-фитнес-уреди-ръковод"
-    },
-    "blog/фитнес-уреди-срещу-свободни-тежести/index.html": {
-      "path": "blog/фитнес-уреди-срещу-свободни-тежести"
-    },
-    "blog/мултифункционални-фитнес-уреди-стр/index.html": {
-      "path": "blog/мултифункционални-фитнес-уреди-стр"
-    },
-    "blog/компактни-фитнес-уреди-за-малки-прост/index.html": {
-      "path": "blog/компактни-фитнес-уреди-за-малки-прост"
-    },
-    "blog/фитнес-уреди-за-начинаещи-от-къде-да/index.html": {
-      "path": "blog/фитнес-уреди-за-начинаещи-от-къде-да"
-    },
-    "blog/най-добрите-фитнес-уреди-за-отслабван/index.html": {
-      "path": "blog/най-добрите-фитнес-уреди-за-отслабван"
-    },
-    "blog/кардио-или-силови-фитнес-уреди-какв/index.html": {
-      "path": "blog/кардио-или-силови-фитнес-уреди-какв"
-    },
-    "blog/как-да-изберем-правилния-фитнес-уред-з/index.html": {
-      "path": "blog/как-да-изберем-правилния-фитнес-уред-з"
-    },
-    "blog/най-добрите-бягащи-пътеки-за-домашна-у/index.html": {
-      "path": "blog/най-добрите-бягащи-пътеки-за-домашна-у"
-    },
-    "blog/venum-и-top-rank-сътрудничество-което-прави-исто/index.html": {
-      "path": "blog/venum-и-top-rank-сътрудничество-което-прави-исто"
-    },
-    "blog/пътеки-за-бягане-за-възрастни-хора/index.html": {
-      "path": "blog/пътеки-за-бягане-за-възрастни-хора"
-    },
-    "blog/най-честите-проблеми-при-пътеки-за-бяг/index.html": {
-      "path": "blog/най-честите-проблеми-при-пътеки-за-бяг"
-    },
-    "blog/как-да-изберем-пътека-за-бягане/index.html": {
-      "path": "blog/как-да-изберем-пътека-за-бягане"
-    },
-    "blog/какво-да-изберете-муай-тай-или-бокс/index.html": {
-      "path": "blog/какво-да-изберете-муай-тай-или-бокс"
-    },
-    "blog/поддръжка-и-грижа-за-пътеките-за-бяган/index.html": {
-      "path": "blog/поддръжка-и-грижа-за-пътеките-за-бяган"
-    },
-    "blog/как-да-оптимизирате-тренировката-си-н/index.html": {
-      "path": "blog/как-да-оптимизирате-тренировката-си-н"
-    },
-    "blog/най-добрият-пътеводител-за-аксесоари/index.html": {
-      "path": "blog/най-добрият-пътеводител-за-аксесоари"
-    },
-    "blog/упражнения-и-тренировки-на-пътека/index.html": {
-      "path": "blog/упражнения-и-тренировки-на-пътека"
-    },
-    "blog/какво-да-търсите-в-характеристиките-н/index.html": {
-      "path": "blog/какво-да-търсите-в-характеристиките-н"
-    },
-    "blog/най-добрите-пътеки-за-бягане-за-2024-г/index.html": {
-      "path": "blog/най-добрите-пътеки-за-бягане-за-2024-г"
-    },
-    "blog/видове-пътеки-за-бягане/index.html": {
-      "path": "blog/видове-пътеки-за-бягане"
-    },
-    "blog/история-и-развитие-на-пътеките-за-бяга/index.html": {
-      "path": "blog/история-и-развитие-на-пътеките-за-бяга"
-    },
-    "blog/ползи-от-пътеките-за-бягане/index.html": {
-      "path": "blog/ползи-от-пътеките-за-бягане"
-    },
-    "blog/какво-е-смит-машина/index.html": {
-      "path": "blog/какво-е-смит-машина"
-    },
-    "blog/ползите-за-здравето-от-бягането-на-път/index.html": {
-      "path": "blog/ползите-за-здравето-от-бягането-на-път"
-    },
-    "blog/фитнес-зала-за-домашна-употреба-софия/index.html": {
-      "path": "blog/фитнес-зала-за-домашна-употреба-софия"
-    },
-    "blog/как-да-изберем-олимпийски-лост-за-трен/index.html": {
-      "path": "blog/как-да-изберем-олимпийски-лост-за-трен"
-    },
-    "blog/иновации-в-технологията-на-бягащите-п/index.html": {
-      "path": "blog/иновации-в-технологията-на-бягащите-п"
-    },
-    "blog/история-и-еволюция-на-медицинските-то/index.html": {
-      "path": "blog/история-и-еволюция-на-медицинските-то"
-    },
-    "blog/как-да-се-катерите-по-въже/index.html": {
-      "path": "blog/как-да-се-катерите-по-въже"
-    },
-    "blog/защо-да-изберем-шорти-за-бойни-спортов/index.html": {
-      "path": "blog/защо-да-изберем-шорти-за-бойни-спортов"
-    },
-    "blog/детски-дрехи/index.html": {
-      "path": "blog/детски-дрехи"
-    },
-    "blog/фитнес-зала-за-домашна-употреба-в-част/index.html": {
-      "path": "blog/фитнес-зала-за-домашна-употреба-в-част"
-    },
-    "blog/защо-да-изберете-комбиниран-фитнес-ур/index.html": {
-      "path": "blog/защо-да-изберете-комбиниран-фитнес-ур"
-    },
-    "blog/разлики-между-мъжки-и-дамски-боксови-р/index.html": {
-      "path": "blog/разлики-между-мъжки-и-дамски-боксови-р"
-    },
-    "blog/цели-за-тренировки-на-бягаща-пътека/index.html": {
-      "path": "blog/цели-за-тренировки-на-бягаща-пътека"
-    },
-    "blog/боксови-обувки-предимства-и-характе/index.html": {
-      "path": "blog/боксови-обувки-предимства-и-характе"
-    },
-    "blog/ходене-или-бягане/index.html": {
-      "path": "blog/ходене-или-бягане"
-    },
-    "blog/най-добрите-фитнес-уреди-за-крака-във-ф/index.html": {
-      "path": "blog/най-добрите-фитнес-уреди-за-крака-във-ф"
-    },
-    "blog/тренировки-за-управление-на-гнева/index.html": {
-      "path": "blog/тренировки-за-управление-на-гнева"
-    },
-    "produkt/велоергометър-kettler-hoi-ride-stone/index.html": {
-      "path": "produkt/велоергометър-kettler-hoi-ride-stone"
-    },
-    "produkt/рекумбент-spirit-recumbent-bike-cr900led/index.html": {
-      "path": "produkt/рекумбент-spirit-recumbent-bike-cr900led"
-    },
-    "produkt/велоергометър-renegade-air-bike-ab100/index.html": {
-      "path": "produkt/велоергометър-renegade-air-bike-ab100"
-    },
-    "produkt/велоергометър-sole-lcb/index.html": {
-      "path": "produkt/велоергометър-sole-lcb"
-    },
-    "produkt/бинтове-за-бокс-leone-black-350см/index.html": {
-      "path": "produkt/бинтове-за-бокс-leone-black-350см"
-    },
-    "produkt/каска-за-бокс-leone-full-cover/index.html": {
-      "path": "produkt/каска-за-бокс-leone-full-cover"
-    },
-    "produkt/боксови-ръкавици-leone-shock-boxing-gloves-black/index.html": {
-      "path": "produkt/боксови-ръкавици-leone-shock-boxing-gloves-black"
-    },
-    "produkt/боксови-ръкавици-leone-shock-blue/index.html": {
-      "path": "produkt/боксови-ръкавици-leone-shock-blue"
-    },
-    "produkt-kategoriya/шорти/index.html": {
-      "path": "produkt-kategoriya/шорти"
-    },
-    "produkt/раница-hayabusa-ryoko-backpack/index.html": {
-      "path": "produkt/раница-hayabusa-ryoko-backpack"
-    },
-    "produkt/бинтове-за-бокс-hayabusa-iron-man/index.html": {
-      "path": "produkt/бинтове-за-бокс-hayabusa-iron-man"
-    },
-    "produkt/спортен-сак-hayabusa-ryoko-duffle-bag/index.html": {
-      "path": "produkt/спортен-сак-hayabusa-ryoko-duffle-bag"
-    },
-    "produkt/наглезенки-hayabusa-ankle-supports/index.html": {
-      "path": "produkt/наглезенки-hayabusa-ankle-supports"
-    },
-    "produkt-kategoriya/сакове-и-раници/index.html": {
-      "path": "produkt-kategoriya/сакове-и-раници"
-    },
-    "produkt/протектор-за-уста-venum-predator-mouthguard-white-black/index.html": {
-      "path": "produkt/протектор-за-уста-venum-predator-mouthguard-white-black"
-    },
-    "produkt/протектор-за-уста-venum-challenger-mouthguard-yellow-black/index.html": {
-      "path": "produkt/протектор-за-уста-venum-challenger-mouthguard-yellow-black"
-    },
-    "produkt/протектор-за-уста-venum-challenger-mouthguard-cyan-black/index.html": {
-      "path": "produkt/протектор-за-уста-venum-challenger-mouthguard-cyan-black"
-    },
-    "produkt/протектор-за-уста-venum-challenger-mouthguard-red-devil/index.html": {
-      "path": "produkt/протектор-за-уста-venum-challenger-mouthguard-red-devil"
-    },
-    "produkt-kategoriya/лежанки-и-пейки/index.html": {
-      "path": "produkt-kategoriya/лежанки-и-пейки"
-    },
-    "produkt/права-пейка-body-solid-flat-bench-gfb350/index.html": {
-      "path": "produkt/права-пейка-body-solid-flat-bench-gfb350"
-    },
-    "produkt/лежанка-body-solid-gdib46l/index.html": {
-      "path": "produkt/лежанка-body-solid-gdib46l"
-    },
-    "produkt/пейка-за-коремни-преси-body-solid-gab-60/index.html": {
-      "path": "produkt/пейка-за-коремни-преси-body-solid-gab-60"
-    },
-    "produkt/чупеща-пейка-за-фитнес-body-solid-pfid130x/index.html": {
-      "path": "produkt/чупеща-пейка-за-фитнес-body-solid-pfid130x"
-    },
-    "produkt-kategoriya/професионални-фитнес-уреди/index.html": {
-      "path": "produkt-kategoriya/професионални-фитнес-уреди"
-    },
-    "produkt/бягаща-пътека-lotto-fitness-forza/index.html": {
-      "path": "produkt/бягаща-пътека-lotto-fitness-forza"
-    },
-    "produkt/бягаща-пътека-evolve-18-5-tft-console/index.html": {
-      "path": "produkt/бягаща-пътека-evolve-18-5-tft-console"
-    },
-    "produkt/бягаща-пътека-evolve-ultra-ul-215/index.html": {
-      "path": "produkt/бягаща-пътека-evolve-ultra-ul-215"
-    },
-    "produkt/бягаща-пътека-spirit-ct800/index.html": {
-      "path": "produkt/бягаща-пътека-spirit-ct800"
-    },
-    "produkt/боксови-ръкавици-venum-challenger-3-0-black-gold/index.html": {
-      "path": "produkt/боксови-ръкавици-venum-challenger-3-0-black-gold"
-    },
-    "produkt/детски-боксови-ръкавици-venum-contender-kids/index.html": {
-      "path": "produkt/детски-боксови-ръкавици-venum-contender-kids"
-    },
-    "produkt/комбиниран-уред-body-solid-bsg10x/index.html": {
-      "path": "produkt/комбиниран-уред-body-solid-bsg10x"
-    },
-    "produkt/смит-машина-body-solid-gs348q/index.html": {
-      "path": "produkt/смит-машина-body-solid-gs348q"
-    },
-    "produkt/комбиниран-уред-body-solid-exm4000s/index.html": {
-      "path": "produkt/комбиниран-уред-body-solid-exm4000s"
-    },
-    "produkt/комбиниран-уред-body-solid-exm2750/index.html": {
-      "path": "produkt/комбиниран-уред-body-solid-exm2750"
-    },
-    "produkt/спин-байк-sole-sb700/index.html": {
-      "path": "produkt/спин-байк-sole-sb700"
-    },
-    "produkt/бинтове-за-бокс-venum-handwraps-4m-red/index.html": {
-      "path": "produkt/бинтове-за-бокс-venum-handwraps-4m-red"
-    },
-    "produkt/бинтове-за-бокс-venum-handwraps-4-m-blue/index.html": {
-      "path": "produkt/бинтове-за-бокс-venum-handwraps-4-m-blue"
-    },
-    "produkt/бинтове-за-бокс-venum-4м-black/index.html": {
-      "path": "produkt/бинтове-за-бокс-venum-4м-black"
-    },
-    "produkt/бинтове-за-бокс-venum-hadwraps-250-cm-blue/index.html": {
-      "path": "produkt/бинтове-за-бокс-venum-hadwraps-250-cm-blue"
-    },
-    "produkt-kategoriya/каски-за-бокс/index.html": {
-      "path": "produkt-kategoriya/каски-за-бокс"
-    },
-    "produkt/каска-за-бокс-venum-challenger-black/index.html": {
-      "path": "produkt/каска-за-бокс-venum-challenger-black"
-    },
-    "produkt/каска-за-бокс-venum-challenger-black-ice/index.html": {
-      "path": "produkt/каска-за-бокс-venum-challenger-black-ice"
-    },
-    "produkt/каска-за-бокс-hayabusa-t3-black/index.html": {
-      "path": "produkt/каска-за-бокс-hayabusa-t3-black"
-    },
-    "produkt/каска-за-бокс-super-legionarius-black/index.html": {
-      "path": "produkt/каска-за-бокс-super-legionarius-black"
-    },
-    "produkt/боксови-ръкавици-venum-challenger-3-0-black-black/index.html": {
-      "path": "produkt/боксови-ръкавици-venum-challenger-3-0-black-black"
-    },
-    "produkt/спортен-сак-раница-ufc-fusion-by-venum-fight-week-duffle-bag-earthen-brown/index.html": {
-      "path": "produkt/спортен-сак-раница-ufc-fusion-by-venum-fight-week-duffle-bag-earthen-brown"
-    },
-    "produkt/спортен-сак-venum-laser-xt-realtree-duffle-bag-dark-camo-grey/index.html": {
-      "path": "produkt/спортен-сак-venum-laser-xt-realtree-duffle-bag-dark-camo-grey"
-    },
-    "produkt/спортен-сак-venum-connect-xl-duffle-bag-khaki/index.html": {
-      "path": "produkt/спортен-сак-venum-connect-xl-duffle-bag-khaki"
-    },
-    "produkt/спортен-сак-venum-connect-xl-duffle-bag-black/index.html": {
-      "path": "produkt/спортен-сак-venum-connect-xl-duffle-bag-black"
-    },
-    "produkt/наглезенки-venum-kontact-ankle-support-guard-red/index.html": {
-      "path": "produkt/наглезенки-venum-kontact-ankle-support-guard-red"
-    },
-    "produkt/наглезенки-venum-kontact-ankle-support-guard-blue/index.html": {
-      "path": "produkt/наглезенки-venum-kontact-ankle-support-guard-blue"
-    },
-    "produkt/протектори-за-крака-venum-impact-evo-ice-blue/index.html": {
-      "path": "produkt/протектори-за-крака-venum-impact-evo-ice-blue"
-    },
-    "produkt/протектори-за-крака-venum-kontact-shinguards-and-instep-blac/index.html": {
-      "path": "produkt/протектори-за-крака-venum-kontact-shinguards-and-instep-blac"
-    },
-    "produkt-kategoriya/протектори-за-крака/index.html": {
-      "path": "produkt-kategoriya/протектори-за-крака"
-    },
-    "produkt-kategoriya/протектори-гуми-за-уста/index.html": {
-      "path": "produkt-kategoriya/протектори-гуми-за-уста"
-    },
-    "produkt/протектор-за-уста-venum-predator-mouthguard-grey-black/index.html": {
-      "path": "produkt/протектор-за-уста-venum-predator-mouthguard-grey-black"
-    },
-    "produkt/чупеща-пейка-за-фитнес-body-solid-gfi21/index.html": {
-      "path": "produkt/чупеща-пейка-за-фитнес-body-solid-gfi21"
-    },
-    "produkt/бягаща-пътека-sole-fitness-f85-2023/index.html": {
-      "path": "produkt/бягаща-пътека-sole-fitness-f85-2023"
-    },
-    "produkt-kategoriya/детски-боксови-ръкавици/index.html": {
-      "path": "produkt-kategoriya/детски-боксови-ръкавици"
-    },
-    "produkt-kategoriya/комбиниран-уред/index.html": {
-      "path": "produkt-kategoriya/комбиниран-уред"
-    },
-    "produkt/комбиниран-уред-body-solid-g10b/index.html": {
-      "path": "produkt/комбиниран-уред-body-solid-g10b"
-    },
-    "produkt-kategoriya/спининг-байк/index.html": {
-      "path": "produkt-kategoriya/спининг-байк"
     }
   },
   "routes": [
@@ -431,6 +50,16 @@
         "cache-control": "public, max-age=31536000, immutable"
       },
       "src": "/_nuxt/builds/meta/(.*)"
+    },
+    {
+      "headers": {
+        "access-control-allow-origin": "*",
+        "access-control-allow-methods": "*",
+        "access-control-allow-headers": "*",
+        "access-control-max-age": "0",
+        "cache-control": "s-maxage=3600, stale-while-revalidate=86400"
+      },
+      "src": "/products/page/(.*)"
     },
     {
       "headers": {
@@ -457,6 +86,26 @@
         "Location": "/produkt-kategoriya/$1"
       },
       "src": "/product-category/(.*)"
+    },
+    {
+      "headers": {
+        "access-control-allow-origin": "*",
+        "access-control-allow-methods": "*",
+        "access-control-allow-headers": "*",
+        "access-control-max-age": "0",
+        "cache-control": "s-maxage=3600, stale-while-revalidate=86400"
+      },
+      "src": "/produkt/(.*)"
+    },
+    {
+      "headers": {
+        "access-control-allow-origin": "*",
+        "access-control-allow-methods": "*",
+        "access-control-allow-headers": "*",
+        "access-control-max-age": "0",
+        "cache-control": "s-maxage=3600, stale-while-revalidate=86400"
+      },
+      "src": "/produkt-kategoriya/(.*)"
     },
     {
       "headers": {
@@ -495,8 +144,8 @@
       "handle": "filesystem"
     },
     {
-      "src": "(?<url>/products/page/.*)",
-      "dest": "/__nitro--products-page?url=$url"
+      "src": "/products/page/[1-10]",
+      "dest": "/__nitro"
     },
     {
       "src": "/__nuxt_error",
@@ -511,16 +160,8 @@
       "dest": "/__nitro"
     },
     {
-      "src": "(?<url>/produkt/.*)",
-      "dest": "/__nitro--produkt?url=$url"
-    },
-    {
       "src": "/products",
-      "dest": "/products?url=$url"
-    },
-    {
-      "src": "(?<url>/produkt-kategoriya/.*)",
-      "dest": "/__nitro--produkt-kategoriya?url=$url"
+      "dest": "/__nitro"
     },
     {
       "src": "(?<url>/checkout/.*)",
