@@ -11,12 +11,14 @@ export default defineNuxtConfig({
 
   experimental: {
     payloadExtraction: true,
+    renderJsonPayloads: true,
   },
 
   nitro: {
     preset: 'vercel',
     prerender: {
       routes: ["/", "/products", "/categories", "/contact"],
+      crawlLinks: true,
       concurrency: 5,
       interval: 2000,
       failOnError: false,
@@ -29,23 +31,31 @@ export default defineNuxtConfig({
       "/categories": { static: true },
       "/contact": { static: true },
 
-      // SSR with caching
-      "/produkt/**": {
-        cache: {
-          maxAge: 1800  // 30 минути
-        }
-      },
-      "/products": {
+      // Dynamic routes with SSR and edge caching
+      "/produkt/**": { 
+        ssr: true,
+        swr: 3600, // 1 час между revalidations
         cache: {
           maxAge: 1800
         }
       },
-      "/products/page/**": {
+      "/products": { 
+        ssr: true,
+        swr: 3600,
         cache: {
           maxAge: 1800
         }
       },
-      "/produkt-kategoriya/**": {
+      "/products/page/**": { 
+        ssr: true,
+        swr: 3600,
+        cache: {
+          maxAge: 1800
+        }
+      },
+      "/produkt-kategoriya/**": { 
+        ssr: true,
+        swr: 3600,
         cache: {
           maxAge: 1800
         }
@@ -179,6 +189,15 @@ export default defineNuxtConfig({
           }
         }
       ]
+    }
+  },
+
+  routeRules: {
+    // Global rate limiting
+    "/**": {
+      headers: {
+        "Cache-Control": "public, s-maxage=1800, stale-while-revalidate=3600"
+      }
     }
   },
 });
