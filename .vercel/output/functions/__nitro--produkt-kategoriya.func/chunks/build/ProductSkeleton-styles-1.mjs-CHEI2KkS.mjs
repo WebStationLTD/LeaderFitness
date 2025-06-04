@@ -1,2 +1,0 @@
-const r=".product-skeleton[data-v-7884c902]{border-radius:.5rem;border-width:1px;--tw-border-opacity:1;border-color:rgb(229 231 235/var(--tw-border-opacity,1));--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));padding:1rem}@keyframes pulse-7884c902{0%,to{opacity:1}50%{opacity:.5}}.animate-pulse[data-v-7884c902]{animation:pulse-7884c902 2s cubic-bezier(.4,0,.6,1) infinite}";export{r as P};
-//# sourceMappingURL=ProductSkeleton-styles-1.mjs-CHEI2KkS.mjs.map

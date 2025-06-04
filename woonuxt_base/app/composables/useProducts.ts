@@ -89,16 +89,34 @@ export function useProducts() {
     isLoading.value = true;
 
     try {
-      // За първата страница - директно зареждане
-      if (pageNumber === 1) {
-        await loadProducts(filters, 'first');
+      const route = useRoute();
+      
+      // Извличаме филтрите от URL
+      const urlFilters = { ...filters };
+      
+      // Обработваме category филтъра от URL
+      if (route.query.filter) {
+        const filterStr = route.query.filter as string;
+        if (filterStr.startsWith('category[')) {
+          // Извличаме категориите между [] и ги разделяме по запетая
+          const categoryStr = filterStr.match(/category\[(.*?)\]/)?.[1] || '';
+          const categories = categoryStr.split(',').filter(Boolean);
+          if (categories.length > 0) {
+            urlFilters.categoryIn = categories;
+          }
+        }
+      }
+
+      // За първата страница или при промяна на филтрите - директно зареждане
+      if (pageNumber === 1 || !currentCursor.value) {
+        await loadProducts(urlFilters, 'first');
         return;
       }
 
-      // За останалите страници - използваме cursor навигация
+      // За останалите страници - използваме cursor навигация със запазени филтри
       const variables: Variables = {
         first: 12,
-        ...filters
+        ...urlFilters
       };
 
       let currentPageData = null;
@@ -195,11 +213,13 @@ export function useProducts() {
         }
       `;
 
-      // Итерираме до желаната страница
+      // Итерираме до желаната страница, запазвайки филтрите
       for (let i = 1; i <= pageNumber; i++) {
         const currentVariables: Variables = {
           ...variables,
           after: i === 1 ? undefined : cursor,
+          // Използваме categoryIn масива директно като slug
+          slug: urlFilters.categoryIn
         };
 
         const config = useRuntimeConfig();
@@ -217,13 +237,11 @@ export function useProducts() {
           currentPageData = response.data.products;
 
           if (i < pageNumber) {
-            // Запазваме cursor за следващата итерация
             cursor = currentPageData.pageInfo.endCursor;
             if (cursor && !previousCursors.value.includes(cursor)) {
-            previousCursors.value.push(cursor);
+              previousCursors.value.push(cursor);
             }
           } else {
-            // Последната страница - задаваме данните
             currentPage.value = currentPageData;
             products.value = currentPageData.nodes || [];
             currentCursor.value = currentPageData.pageInfo.endCursor || null;
@@ -231,10 +249,17 @@ export function useProducts() {
         }
       }
 
-      // Зареждаме общия брой продукти само веднъж
-      await loadProductsCount(filters);
+      // Зареждаме общия брой продукти само при нужда
+      if (!totalProducts.value) {
+        await loadProductsCount(urlFilters);
+      }
     } catch (error) {
       console.error('Грешка при зареждане на продукти за страница:', error);
+      if (process.client) {
+        const route = useRoute();
+        console.error('URL филтри:', route.query.filter);
+        console.error('Обработени филтри:', filters);
+      }
     } finally {
       isLoading.value = false;
     }
@@ -576,10 +601,10 @@ export function useProducts() {
       categorySlug = route.params.slug as string;
     }
 
-    // Парсваме всички филтри от URL
+    // Парсваме всички филтри от URL и активните филтри
     const filters: PaginationFilters = {
       search: route.query.search as string,
-      // Първо проверяваме за категория от URL параметрите, после от query, после от филтрите
+      // Комбинираме всички възможни източници на категории
       categoryIn: categorySlug
         ? [categorySlug]
         : route.query.category
@@ -606,8 +631,14 @@ export function useProducts() {
 
     // Запазваме текущата страница при филтриране
     const currentPageNum = getCurrentPageFromRoute();
-    await loadProductsForPage(currentPageNum, filters);
 
+    // Ресетваме пагинацията при промяна на филтрите, освен ако не е изрично навигация към страница
+    if (!route.params.pageNumber) {
+      currentCursor.value = null;
+      previousCursors.value = [];
+    }
+
+    await loadProductsForPage(currentPageNum, filters);
     scrollToTop();
   };
 
@@ -650,10 +681,18 @@ export function useProducts() {
   }
 
   /**
-   * Навигира към конкретна страница чрез URL
+   * Навигира към конкретна страница като запазва текущите филтри
    */
   async function navigateToPage(pageNumber: number): Promise<void> {
-    const targetUrl = getPageUrl(pageNumber);
+    const route = useRoute();
+    const currentQuery = { ...route.query };
+    delete currentQuery.page; // Премахваме page от query, тъй като ще е в URL path
+
+    const targetUrl = {
+      path: getPageUrl(pageNumber),
+      query: currentQuery
+    };
+
     await navigateTo(targetUrl);
   }
 

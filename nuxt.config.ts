@@ -13,6 +13,55 @@ export default defineNuxtConfig({
     payloadExtraction: true,
   },
 
+  nitro: {
+    preset: 'vercel',
+    prerender: {
+      routes: ["/", "/products", "/categories", "/contact"],
+      concurrency: 5,
+      interval: 2000,
+      failOnError: false,
+    },
+    minify: true,
+    compression: true,
+    routeRules: {
+      // Static pages
+      "/": { static: true },
+      "/categories": { static: true },
+      "/contact": { static: true },
+
+      // SSR with caching
+      "/produkt/**": {
+        cache: {
+          maxAge: 1800  // 30 минути
+        }
+      },
+      "/products": {
+        cache: {
+          maxAge: 1800
+        }
+      },
+      "/products/page/**": {
+        cache: {
+          maxAge: 1800
+        }
+      },
+      "/produkt-kategoriya/**": {
+        cache: {
+          maxAge: 1800
+        }
+      },
+
+      // No-cache pages
+      "/checkout/**": { ssr: true, cache: false },
+      "/cart": { ssr: true, cache: false },
+      "/my-account/**": { ssr: true, cache: false },
+    },
+    serverAssets: [{
+      baseName: "public",
+      dir: "public"
+    }]
+  },
+
   runtimeConfig: {
     public: {
       GQL_HOST: "https://leaderfitness.admin-panels.com/graphql",
@@ -27,6 +76,9 @@ export default defineNuxtConfig({
         { rel: "preconnect", href: "https://leaderfitness.admin-panels.com" },
         { rel: "dns-prefetch", href: "https://leaderfitness.admin-panels.com" },
       ],
+      meta: [
+        { name: 'viewport', content: 'width=device-width, initial-scale=1, maximum-scale=1' }
+      ]
     },
   },
 
@@ -38,7 +90,7 @@ export default defineNuxtConfig({
       "/my-account/**",
       "/oauth/**",
     ],
-    cacheTime: 1000 * 60 * 15,
+    cacheTime: 1000 * 60 * 30,
     routes: ["/", "/products", "/categories", "/contact", "/wishlist"],
   },
 
@@ -55,56 +107,30 @@ export default defineNuxtConfig({
           },
         },
         cachePolicy: {
-          maxAge: 900, // 15 minutes
+          maxAge: 3600,                // 1 час основен кеш
+          staleWhileRevalidate: 14400, // 4 часа stale данни
+          typePolicies: {
+            Product: {
+              maxAge: 14400,           // 4 часа
+            },
+            Category: {
+              maxAge: 28800,           // 8 часа
+            },
+            ProductVariation: {
+              maxAge: 3600,            // 1 час
+            }
+          }
         },
-        batch: true, // Enable query batching
-        batchMax: 5, // Maximum number of queries to batch
-        retry: 1,
-      },
-    },
-  },
-
-  nitro: {
-    prerender: {
-      routes: ["/", "/products", "/categories", "/contact"],
-      concurrency: 10,
-      interval: 1000,
-      failOnError: false,
-    },
-    minify: true,
-    routeRules: {
-      // Генерирани по време на билд
-      "/": { static: true },
-      //"/products": { static: true },
-      "/categories": { static: true },
-      "/contact": { static: true },
-
-      // Частично кеширани с ISR (Incremental Static Regeneration)
-      "/produkt/**": {
-        isr: {
-          expiration: 600, // 10 минути
+        batch: true,
+        batchMax: 15,                  // Намалено за по-малко натоварване
+        retry: 3,
+        retryDelay: (count: number) => Math.min(1000 * Math.pow(2, count), 15000),
+        prefetch: true,
+        defaultFetchOptions: {
+          timeout: 30000,              // 30 секунди за споделен хостинг
         },
+        fetchPolicy: 'cache-first',
       },
-      "/products": {
-        isr: {
-          expiration: 600, // 10 минути
-        },
-      },
-      "/products/page/**": {
-        isr: {
-          expiration: 600, // 10 минути
-        },
-      },
-      "/produkt-kategoriya/**": {
-        isr: {
-          expiration: 600,
-        },
-      },
-
-      // Страници с SSR, без кеш
-      "/checkout/**": { ssr: true, cache: false },
-      "/cart": { ssr: true, cache: false },
-      "/my-account/**": { ssr: true, cache: false },
     },
   },
 
@@ -129,16 +155,30 @@ export default defineNuxtConfig({
       runtimeCaching: [
         {
           urlPattern: '/graphql',
-          handler: 'NetworkFirst',
+          handler: 'StaleWhileRevalidate',
           options: {
             cacheName: 'api-cache',
             expiration: {
-              maxEntries: 100,
-              maxAgeSeconds: 60 * 60 * 24, // 24 hours
+              maxEntries: 200,
+              maxAgeSeconds: 86400 * 2 // 48 часа
             },
-          },
+            cacheableResponse: {
+              statuses: [0, 200]
+            }
+          }
         },
-      ],
-    },
+        {
+          urlPattern: /\.(png|jpg|jpeg|webp)$/,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'image-cache',
+            expiration: {
+              maxEntries: 500,
+              maxAgeSeconds: 86400 * 7 // 7 дни
+            }
+          }
+        }
+      ]
+    }
   },
 });

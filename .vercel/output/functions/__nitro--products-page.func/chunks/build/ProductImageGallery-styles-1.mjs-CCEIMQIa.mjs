@@ -1,2 +1,0 @@
-const a=".gallery-images[data-v-a881f432]{display:flex;gap:1rem;overflow:auto}.gallery-images[data-v-a881f432]::-webkit-scrollbar{display:none}.gallery-images img[data-v-a881f432]{aspect-ratio:5/6;-o-object-fit:cover;object-fit:cover;width:72px}@media (min-width:768px){.gallery-images[data-v-a881f432]{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr))}.gallery-images img[data-v-a881f432]{width:100%}}";export{a as P};
-//# sourceMappingURL=ProductImageGallery-styles-1.mjs-CCEIMQIa.mjs.map
