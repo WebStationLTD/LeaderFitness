@@ -201,6 +201,14 @@ const disabledAddToCart = computed(() => {
           </div>
         </div>
       </div>
+      <div v-if="relatedProducts.length" class="mt-16">
+        <h2 class="text-2xl font-medium mb-8">{{ t('product.relatedProducts') }}</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div v-for="(relatedItem, i) in relatedProducts" :key="relatedItem.id" class="product-card">
+            <ProductCardDetailed :node="relatedItem" :index="i" />
+          </div>
+        </div>
+      </div>
     </div>
   </main>
 </template>

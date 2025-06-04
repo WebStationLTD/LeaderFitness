@@ -8,7 +8,7 @@ const hasPrevPage = computed(() => currentPage.value?.pageInfo.hasPreviousPage);
 
 // Показваме реалния общ брой продукти
 const statusMessage = computed(() => {
-  if (totalProducts.value > 0) {
+  if (process.client && totalProducts.value > 0) {
     return ` от общо ${totalProducts.value}`;
   } else if (hasNextPage.value && hasPrevPage.value) {
     return ' (има още страници)';

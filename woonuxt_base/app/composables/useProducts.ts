@@ -22,7 +22,53 @@ interface PaginationFilters {
   attributeFilter?: any[];
 }
 
+interface GraphQLResponse {
+  data?: {
+    products?: {
+      pageInfo: {
+        hasNextPage: boolean;
+        hasPreviousPage: boolean;
+        startCursor: string | null;
+        endCursor: string | null;
+      };
+      nodes: Product[];
+    };
+  };
+}
+
+interface GraphQLCountResponse {
+  data?: {
+    products?: {
+      edges: Array<{
+        node: {
+          databaseId: number;
+        };
+      }>;
+    };
+  };
+}
+
+interface Edge {
+  cursor?: string | null;
+  node: Product;
+}
+
+interface Variables {
+  first?: number;
+  after?: string | null;
+  search?: string;
+  slug?: string[];
+  priceMin?: number;
+  priceMax?: number;
+  onSale?: boolean;
+  orderby?: string;
+  order?: string;
+  rating?: number[];
+}
+
 export function useProducts() {
+  const { setCacheEntry, getCacheEntry } = useGraphQLCache();
+
   // State variables
   const products = useState<Product[]>('products', () => []);
   const currentPage = useState<ProductsPage | null>('currentPage', () => null);
@@ -32,6 +78,9 @@ export function useProducts() {
   // Pagination state
   const currentCursor = useState<string | null>('currentCursor', () => null);
   const previousCursors = useState<string[]>('previousCursors', () => []);
+
+  // Добавяме prefetched state
+  const prefetchedProducts = useState<{[key: string]: ProductsPage}>('prefetchedProducts', () => ({}));
 
   /**
    * Зарежда продукти за конкретна страница
@@ -46,43 +95,133 @@ export function useProducts() {
         return;
       }
 
-      // За останалите страници - симулираме cursor навигация
-      // Ресетваме състоянието и прескачаме до желаната страница
-      currentCursor.value = null;
-      previousCursors.value = [];
-
-      // Зареждаме първата страница
-      const variables: any = {
+      // За останалите страници - използваме cursor навигация
+      const variables: Variables = {
         first: 12,
-        search: filters.search || undefined,
-        slug: filters.categoryIn?.length ? filters.categoryIn : undefined,
-        priceMin: filters.priceMin || undefined,
-        priceMax: filters.priceMax || undefined,
-        onSale: filters.onSale || undefined,
-        orderby: filters.orderby || 'DATE',
-        order: filters.order ? filters.order.toUpperCase() : 'DESC',
-        rating: filters.rating?.length ? filters.rating : undefined,
+        ...filters
       };
 
       let currentPageData = null;
-      let cursor = null;
+      let cursor: string | null = null;
+
+      // GraphQL заявка
+      const query = `
+        query getProducts(
+          $after: String
+          $first: Int = 12
+          $search: String
+          $slug: [String]
+          $priceMin: Float
+          $priceMax: Float
+          $onSale: Boolean
+          $orderby: ProductsOrderByEnum = DATE
+          $order: OrderEnum = DESC
+          $rating: [Int]
+        ) {
+          products(
+            first: $first
+            after: $after
+            where: {
+              categoryIn: $slug
+              search: $search
+              minPrice: $priceMin
+              maxPrice: $priceMax
+              onSale: $onSale
+              rating: $rating
+              visibility: VISIBLE
+              status: "publish"
+              orderby: { field: $orderby, order: $order }
+            }
+          ) {
+            pageInfo {
+              hasNextPage
+              hasPreviousPage
+              startCursor
+              endCursor
+            }
+            nodes {
+              name
+              slug
+              type
+              databaseId
+              id
+              averageRating
+              reviewCount
+              ... on SimpleProduct {
+                price
+                regularPrice
+                salePrice
+                stockStatus
+                stockQuantity
+                image {
+                  sourceUrl
+                  altText
+                }
+              }
+              ... on VariableProduct {
+                price
+                regularPrice
+                salePrice
+                stockStatus
+                stockQuantity
+                image {
+                  sourceUrl
+                  altText
+                }
+                variations {
+                  nodes {
+                    databaseId
+                    name
+                    price
+                    regularPrice
+                    salePrice
+                    stockStatus
+                    stockQuantity
+                    attributes {
+                      nodes {
+                        name
+                        value
+                      }
+                    }
+                    image {
+                      sourceUrl
+                      altText
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      `;
 
       // Итерираме до желаната страница
       for (let i = 1; i <= pageNumber; i++) {
-        const currentVariables: any = {
+        const currentVariables: Variables = {
           ...variables,
           after: i === 1 ? undefined : cursor,
         };
 
-        const { data }: { data: any } = await useAsyncGql('getProducts', currentVariables);
+        const config = useRuntimeConfig();
+        const gqlHost = config.public.GQL_HOST || 'https://leaderfitness.admin-panels.com/graphql';
+        
+        const response = await $fetch<GraphQLResponse>(gqlHost, {
+          method: 'POST',
+          body: {
+            query,
+            variables: currentVariables
+          }
+        });
 
-        if (data.value?.products) {
-          currentPageData = data.value.products;
+        if (response.data?.products) {
+          currentPageData = response.data.products;
 
           if (i < pageNumber) {
             // Запазваме cursor за следващата итерация
-            cursor = data.value.products.pageInfo.endCursor;
+            cursor = currentPageData.pageInfo.endCursor;
+            if (cursor && !previousCursors.value.includes(cursor)) {
             previousCursors.value.push(cursor);
+            }
           } else {
             // Последната страница - задаваме данните
             currentPage.value = currentPageData;
@@ -104,8 +243,19 @@ export function useProducts() {
   /**
    * Зарежда продукти с server-side pagination и филтри
    */
-  async function loadProducts(filters: PaginationFilters = {}, direction: 'next' | 'prev' | 'first' = 'first'): Promise<void> {
+  async function loadProducts(filters: PaginationFilters = {}, direction: 'next' | 'prev' | 'first' = 'first', isPrefetch = false): Promise<void> {
+    // Ако е prefetch режим, проверяваме дали вече имаме кеширани данни
+    const cacheKey = `${direction}-${JSON.stringify(filters)}`;
+    if (!isPrefetch && prefetchedProducts.value[cacheKey]) {
+      currentPage.value = prefetchedProducts.value[cacheKey];
+      products.value = currentPage.value.nodes || [];
+      delete prefetchedProducts.value[cacheKey];
+      return;
+    }
+
+    if (!isPrefetch) {
     isLoading.value = true;
+    }
 
     try {
       const variables: any = {
@@ -123,12 +273,142 @@ export function useProducts() {
         rating: filters.rating?.length ? filters.rating : undefined,
       };
 
+      // Проверяваме за кеширани данни
+      const query = `
+        query getProducts(
+          $after: String
+          $before: String
+          $slug: [String]
+          $first: Int = 12
+          $last: Int
+          $search: String
+          $priceMin: Float
+          $priceMax: Float
+          $onSale: Boolean
+          $orderby: ProductsOrderByEnum = DATE
+          $order: OrderEnum = DESC
+          $rating: [Int]
+        ) {
+          products(
+            first: $first
+            last: $last
+            after: $after
+            before: $before
+            where: {
+              categoryIn: $slug
+              search: $search
+              minPrice: $priceMin
+              maxPrice: $priceMax
+              onSale: $onSale
+              rating: $rating
+              visibility: VISIBLE
+              status: "publish"
+              orderby: { field: $orderby, order: $order }
+            }
+          ) {
+            pageInfo {
+              hasNextPage
+              hasPreviousPage
+              startCursor
+              endCursor
+            }
+            nodes {
+              name
+              slug
+              type
+              databaseId
+              id
+              averageRating
+              reviewCount
+              ... on SimpleProduct {
+                price
+                regularPrice
+                salePrice
+                stockStatus
+                stockQuantity
+                image {
+                  sourceUrl
+                  altText
+                }
+              }
+              ... on VariableProduct {
+                price
+                regularPrice
+                salePrice
+                stockStatus
+                stockQuantity
+                image {
+                  sourceUrl
+                  altText
+                }
+                variations {
+                  nodes {
+                    databaseId
+                    name
+                    price
+                    regularPrice
+                    salePrice
+                    stockStatus
+                    stockQuantity
+                    attributes {
+                      nodes {
+                        name
+                        value
+                      }
+                    }
+                    image {
+                      sourceUrl
+                      altText
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      `;
+
+      let productsData = null;
+
+      // Използваме $fetch за client-side заявки
+      if (process.client) {
+        const config = useRuntimeConfig();
+        const gqlHost = config.public.GQL_HOST || 'https://leaderfitness.admin-panels.com/graphql';
+        const response = await $fetch<GraphQLResponse>(gqlHost, {
+          method: 'POST',
+          body: {
+            query,
+            variables
+          }
+        });
+
+        if (response.data?.products) {
+          productsData = response.data.products;
+        }
+
+        if (productsData) {
+          if (isPrefetch) {
+            prefetchedProducts.value[cacheKey] = productsData;
+          } else {
+            currentPage.value = productsData;
+            products.value = productsData.nodes || [];
+          }
+        }
+      } else {
+        // За server-side рендериране използваме useAsyncGql
       const { data } = await useAsyncGql('getProducts', variables);
 
       if (data.value?.products) {
+          if (isPrefetch) {
+            prefetchedProducts.value[cacheKey] = data.value.products;
+          } else {
         currentPage.value = data.value.products;
         products.value = data.value.products.nodes || [];
+          }
+        }
+      }
 
+      if (!isPrefetch) {
         // Управление на cursor историята
         if (direction === 'next' && currentCursor.value) {
           previousCursors.value.push(currentCursor.value);
@@ -138,17 +418,19 @@ export function useProducts() {
           previousCursors.value = [];
         }
 
-        currentCursor.value = data.value.products.pageInfo.endCursor || null;
-      }
+        currentCursor.value = currentPage.value?.pageInfo.endCursor || null;
 
       // Зареждаме общия брой продукти при първо зареждане или при нови филтри
       if (direction === 'first') {
         await loadProductsCount(filters);
+        }
       }
     } catch (error) {
       console.error('Грешка при зареждане на продукти:', error);
     } finally {
+      if (!isPrefetch) {
       isLoading.value = false;
+      }
     }
   }
 
@@ -168,10 +450,70 @@ export function useProducts() {
         rating: filters.rating?.length ? filters.rating : undefined,
       };
 
+      const countQuery = `
+        query getProductsCount(
+          $slug: [String]
+          $search: String
+          $priceMin: Float
+          $priceMax: Float
+          $onSale: Boolean
+          $orderby: ProductsOrderByEnum = DATE
+          $order: OrderEnum = DESC
+          $rating: [Int]
+        ) {
+          products(
+            first: 9999
+            where: {
+              categoryIn: $slug
+              search: $search
+              minPrice: $priceMin
+              maxPrice: $priceMax
+              onSale: $onSale
+              rating: $rating
+              visibility: VISIBLE
+              status: "publish"
+              orderby: { field: $orderby, order: $order }
+            }
+          ) {
+            edges {
+              node {
+                databaseId
+              }
+            }
+          }
+        }
+      `;
+
+      if (process.client) {
+        // Проверяваме за кеширани данни
+        const cachedData = getCacheEntry(countQuery, countVariables);
+        if (cachedData?.edges) {
+          totalProducts.value = cachedData.edges.length;
+          return;
+        }
+
+        const config = useRuntimeConfig();
+        const gqlHost = config.public.GQL_HOST || 'https://leaderfitness.admin-panels.com/graphql';
+        const response = await $fetch<GraphQLCountResponse>(gqlHost, {
+          method: 'POST',
+          body: {
+            query: countQuery,
+            variables: countVariables
+          }
+        });
+
+        if (response.data?.products?.edges) {
+          totalProducts.value = response.data.products.edges.length;
+          // Кешираме резултата
+          setCacheEntry(countQuery, countVariables, response.data.products);
+        }
+      } else {
+        // За server-side рендериране използваме useAsyncGql
       const { data: countData } = await useAsyncGql('getProductsCount' as any, countVariables);
 
       if (countData.value?.products?.edges) {
         totalProducts.value = countData.value.products.edges.length;
+        }
       }
     } catch (error) {
       console.error('Грешка при зареждане на общ брой продукти:', error);
@@ -262,9 +604,9 @@ export function useProducts() {
       if (!isNaN(maxPrice)) filters.priceMax = maxPrice;
     }
 
-    // ВИНАГИ зареждаме страница 1 когато updateProductList е извикана
-    // Това се случва при промяна на филтри, така че искаме да се върнем в началото
-    await loadProductsForPage(1, filters);
+    // Запазваме текущата страница при филтриране
+    const currentPageNum = getCurrentPageFromRoute();
+    await loadProductsForPage(currentPageNum, filters);
 
     scrollToTop();
   };
@@ -321,6 +663,7 @@ export function useProducts() {
     isLoading,
     totalProducts,
     previousCursors,
+    prefetchedProducts,
     loadProducts,
     loadProductsForPage,
     nextPage,

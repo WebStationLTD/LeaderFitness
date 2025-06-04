@@ -7,13 +7,13 @@ const { node } = defineProps({
 const { storeSettings } = useAppConfig();
 
 const salePercentage = computed((): string => {
-  if (!node?.rawSalePrice || !node?.rawRegularPrice) return '';
-  const salePrice = parseFloat(node?.rawSalePrice);
-  const regularPrice = parseFloat(node?.rawRegularPrice);
-  return Math.round(((salePrice - regularPrice) / regularPrice) * 100) + ` %`;
+  if (!node?.salePrice || !node?.regularPrice) return '';
+  const salePrice = parseFloat(node?.salePrice);
+  const regularPrice = parseFloat(node?.regularPrice);
+  return Math.round(((regularPrice - salePrice) / regularPrice) * 100) + ` %`;
 });
 
-const showSaleBadge = computed(() => node.rawSalePrice && storeSettings.saleBadge !== 'hidden');
+const showSaleBadge = computed(() => node.salePrice && storeSettings.saleBadge !== 'hidden');
 
 const textToDisplay = computed(() => {
   if (storeSettings?.saleBadge === 'percent') return salePercentage.value;

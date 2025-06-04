@@ -3,7 +3,11 @@ export default defineNuxtConfig({
 
   components: [{ path: "./components", pathPrefix: false }],
 
-  modules: ["nuxt-graphql-client", "@nuxtjs/sitemap"],
+  modules: [
+    "nuxt-graphql-client",
+    "@nuxtjs/sitemap",
+    "@vite-pwa/nuxt"
+  ],
 
   experimental: {
     payloadExtraction: true,
@@ -50,6 +54,12 @@ export default defineNuxtConfig({
             secure: true,
           },
         },
+        cachePolicy: {
+          maxAge: 900, // 15 minutes
+        },
+        batch: true, // Enable query batching
+        batchMax: 5, // Maximum number of queries to batch
+        retry: 1,
       },
     },
   },
@@ -65,12 +75,22 @@ export default defineNuxtConfig({
     routeRules: {
       // Генерирани по време на билд
       "/": { static: true },
-      "/products": { static: true },
+      //"/products": { static: true },
       "/categories": { static: true },
       "/contact": { static: true },
 
       // Частично кеширани с ISR (Incremental Static Regeneration)
       "/produkt/**": {
+        isr: {
+          expiration: 600, // 10 минути
+        },
+      },
+      "/products": {
+        isr: {
+          expiration: 600, // 10 минути
+        },
+      },
+      "/products/page/**": {
         isr: {
           expiration: 600, // 10 минути
         },
@@ -89,4 +109,36 @@ export default defineNuxtConfig({
   },
 
   compatibilityDate: "2025-05-03",
+
+  pwa: {
+    registerType: 'autoUpdate',
+    manifest: {
+      name: 'Leader Fitness',
+      short_name: 'LeaderFitness',
+      theme_color: '#ffffff',
+      icons: [
+        {
+          src: 'pwa-192x192.png',
+          sizes: '192x192',
+          type: 'image/png',
+        },
+      ]
+    },
+    workbox: {
+      globPatterns: ['**/*.{js,css,html,png,jpg,jpeg,webp}'],
+      runtimeCaching: [
+        {
+          urlPattern: '/graphql',
+          handler: 'NetworkFirst',
+          options: {
+            cacheName: 'api-cache',
+            expiration: {
+              maxEntries: 100,
+              maxAgeSeconds: 60 * 60 * 24, // 24 hours
+            },
+          },
+        },
+      ],
+    },
+  },
 });

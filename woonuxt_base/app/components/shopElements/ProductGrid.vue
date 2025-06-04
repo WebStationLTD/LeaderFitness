@@ -1,27 +1,93 @@
 <script setup lang="ts">
-const { products, isLoading } = useProducts();
+import { useThrottleFn } from '@vueuse/core';
+const { products, isLoading, loadProducts, currentPage } = useProducts();
+const route = useRoute();
+const loadingNextPage = ref(false);
+const initialLoad = ref(true);
+
+// Следим за край на първоначалното зареждане
+watch(isLoading, (newVal) => {
+  if (!newVal && initialLoad.value) {
+    initialLoad.value = false;
+  }
+});
+
+// Intersection Observer за prefetching
+const observerTarget = ref<HTMLElement | null>(null);
+const observer = ref<IntersectionObserver | null>(null);
+
+onMounted(() => {
+  // Setup Intersection Observer за prefetching с по-добри параметри
+  observer.value = new IntersectionObserver(
+    useThrottleFn(async (entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+      
+      if (entry.isIntersecting && !loadingNextPage.value && currentPage.value?.pageInfo.hasNextPage) {
+        loadingNextPage.value = true;
+        try {
+          // Зареждаме следващата страница в prefetch режим
+          await loadProducts({
+            search: route.query.search as string,
+            categoryIn: route.query.category ? [route.query.category as string] : undefined,
+            priceMin: route.query.priceMin ? parseFloat(route.query.priceMin as string) : undefined,
+            priceMax: route.query.priceMax ? parseFloat(route.query.priceMax as string) : undefined,
+            onSale: route.query.sale === 'true' ? true : undefined,
+            orderby: (route.query.orderby as string) || 'DATE',
+          }, 'next', true); // true за prefetch режим
+        } catch (error) {
+          console.error('Error prefetching next page:', error);
+        } finally {
+          loadingNextPage.value = false;
+        }
+      }
+    }, 1000), // 1 секунда throttle за да избегнем множество заявки
+    {
+      rootMargin: '400px', // Увеличаваме дистанцията за по-ранен prefetch
+      threshold: 0.1 // Започваме зареждане при 10% видимост
+    }
+  );
+
+  if (observerTarget.value) {
+    observer.value.observe(observerTarget.value);
+  }
+});
+
+onUnmounted(() => {
+  if (observer.value) {
+    observer.value.disconnect();
+  }
+});
 </script>
 
 <template>
   <Transition name="fade" mode="out-in">
-    <section v-if="!!products.length" class="relative w-full">
-      <div v-if="isLoading" class="flex justify-center items-center py-8">
-        <Icon name="ion:refresh-outline" size="32" class="w-8 h-8 animate-spin text-primary" />
-        <span class="ml-2 text-gray-600">Зареждане на продукти...</span>
+    <!-- Показваме skeleton при първоначално зареждане -->
+    <div v-if="isLoading || initialLoad" class="product-grid">
+      <ProductSkeleton v-for="i in 12" :key="i" />
       </div>
 
-      <TransitionGroup v-else name="shrink" tag="div" mode="in-out" class="product-grid">
+    <!-- Показваме продуктите ако има такива -->
+    <section v-else-if="!!products.length" class="relative w-full">
+      <TransitionGroup name="shrink" tag="div" mode="in-out" class="product-grid">
         <div
           v-for="(node, i) in products"
           :key="node.id || i"
           class="product-card rounded-lg overflow-hidden border border-gray-200 shadow-md hover:shadow-lg transition-shadow duration-300 h-full bg-white p-2 w-full">
-          <ProductCard :node="node" :index="i" />
+          <ProductCardDetailed :node="node" :index="i" />
         </div>
       </TransitionGroup>
 
+      <!-- Intersection Observer target за prefetching -->
+      <div ref="observerTarget" class="h-px w-full" />
+
       <CursorPagination />
     </section>
-    <NoProductsFound v-else-if="!isLoading">Could not fetch products from your store. Please check your configuration.</NoProductsFound>
+
+    <!-- Показваме NoProductsFound само ако наистина няма продукти след зареждане -->
+    <NoProductsFound v-else>
+      Could not fetch products from your store. Please check your configuration.
+    </NoProductsFound>
   </Transition>
 </template>
 
@@ -64,18 +130,5 @@ const { products, isLoading } = useProducts();
 .shrink-enter-from {
   opacity: 0;
   transform: scale(0.75) translateY(25%);
-}
-
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
 }
 </style>

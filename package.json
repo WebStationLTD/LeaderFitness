@@ -32,6 +32,7 @@
     "@nuxtjs/tailwindcss": "^6.13.2",
     "@nuxtjs/vercel-builder": "^0.25.0",
     "@tailwindcss/typography": "^0.5.16",
+    "@vite-pwa/nuxt": "^1.0.3",
     "cross-env": "^7.0.3",
     "nuxt": "^3.17.1",
     "nuxt-graphql-client": "^0.2.46",

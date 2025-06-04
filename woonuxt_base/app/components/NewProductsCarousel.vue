@@ -98,10 +98,9 @@ onUnmounted(() => {
           <div class="carousel-container">
             <!-- Tiny-Slider контейнер -->
             <div ref="sliderContainerRef" class="tiny-slider">
-              <div v-for="(product, index) in newProducts" :key="product.id" class="tiny-slide carousel-slide">
-                <div
-                  class="product-card rounded-lg overflow-hidden border border-gray-200 shadow-md hover:shadow-lg transition-shadow duration-300 h-full bg-white p-2">
-                  <ProductCard :node="product" :index="index" />
+              <div class="carousel-slide" v-for="(product, index) in newProducts" :key="product.id">
+                <div class="product-card rounded-lg overflow-hidden border border-gray-200 shadow-md hover:shadow-lg transition-shadow duration-300 h-full bg-white p-2 w-full">
+                  <ProductCardDetailed :node="product" :index="index" />
                 </div>
               </div>
             </div>
@@ -144,22 +143,9 @@ onUnmounted(() => {
   width: 100%;
 }
 
-/* Допълнителни стилове за ProductCard в карусела */
-:deep(.carousel-slide .product-card) {
-  background-color: white;
-  transition: all 0.3s ease;
+/* Допълнителни стилове за ProductCardDetailed в карусела */
+.carousel-slide :deep(.product-card-link) {
   height: 100%;
-}
-
-:deep(.carousel-slide .product-card:hover) {
-  transform: translateY(-5px);
-}
-
-:deep(.carousel-slide img) {
-  object-fit: cover;
-  width: 100%;
-  height: auto;
-  aspect-ratio: 1 / 1;
 }
 
 /* Настройка на контролите за Tiny-Slider */

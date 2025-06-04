@@ -48,7 +48,11 @@ const selectedVariationId = ref<number | null>(null);
 // Изчисляване на продуктов тип
 const isVariableProduct = computed(() => props.node?.type === ProductTypesEnum.VARIABLE);
 const isSimpleProduct = computed(() => props.node?.type === ProductTypesEnum.SIMPLE);
-const hasVariations = computed(() => isVariableProduct.value && props.node?.variations?.nodes && props.node.variations.nodes.length > 0);
+const hasVariations = computed(() => {
+  return isVariableProduct.value && 
+         props.node?.variations?.nodes !== undefined && 
+         props.node.variations.nodes.length > 0;
+});
 
 // Изчисляване дали да показваме вариации и бутон
 const shouldShowCart = computed(() => isVariableProduct.value || isSimpleProduct.value);
@@ -63,9 +67,17 @@ const decrementQuantity = () => {
 };
 
 // Функция за избиране на вариация
-const selectVariation = (varId: number) => {
-  selectedVariationId.value = varId;
-  variationError.value = '';
+const selectVariation = (variationId: number) => {
+  selectedVariationId.value = variationId;
+  const selectedVariation = props.node?.variations?.nodes?.find(v => v.databaseId === variationId);
+  
+  if (!selectedVariation) {
+    variationError.value = 'Invalid variation selected';
+    return;
+  }
+
+  // Тук можем да добавим допълнителна логика за обработка на избраната вариация
+  // Например актуализиране на цена, наличност и т.н.
 };
 
 // Добавяне в количката
@@ -105,6 +117,15 @@ watch(cart, () => {
     isLoading.value = false;
     variationError.value = '';
   }, 300);
+});
+
+// Computed за определяне дали продуктът е в разпродажба
+const isOnSale = computed(() => {
+  if (selectedVariationId.value && props.node?.variations?.nodes) {
+    const selectedVariation = props.node.variations.nodes.find(v => v.databaseId === selectedVariationId.value);
+    return selectedVariation?.salePrice !== null && selectedVariation?.salePrice !== undefined;
+  }
+  return props.node?.salePrice !== null && props.node?.salePrice !== undefined;
 });
 </script>
 

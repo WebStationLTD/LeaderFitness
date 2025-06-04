@@ -108,27 +108,7 @@ if (slug.value) {
   console.log('Намерена категория:', matchingCategory.value);
 }
 
-// Ако имаме категория, зареждаме продуктите с новия подход
-if (matchingCategory.value && matchingCategory.value.slug) {
-  try {
-    const categoryFilters = {
-      categoryIn: [matchingCategory.value.slug],
-      search: route.query.search as string,
-      priceMin: route.query.priceMin ? parseFloat(route.query.priceMin as string) : undefined,
-      priceMax: route.query.priceMax ? parseFloat(route.query.priceMax as string) : undefined,
-      onSale: route.query.sale === 'true' ? true : undefined,
-      orderby: (route.query.orderby as string) || 'DATE',
-    };
-
-    const currentPageNum = getCurrentPageFromRoute();
-    await loadProductsForPage(currentPageNum, categoryFilters);
-    console.log(`Заредени продукти от категория ${matchingCategory.value.slug} с pagination`);
-  } catch (error) {
-    console.error('Грешка при зареждане на продукти:', error);
-  }
-} else if (slug.value) {
-  // Нямаме намерена категория, но опитваме директно със slug-а
-  try {
+// Подготвяме филтрите за категорията
     const categoryFilters = {
       categoryIn: [slug.value],
       search: route.query.search as string,
@@ -138,40 +118,23 @@ if (matchingCategory.value && matchingCategory.value.slug) {
       orderby: (route.query.orderby as string) || 'DATE',
     };
 
+// Зареждаме продуктите в onMounted
+onMounted(async () => {
+  // Зареждаме продуктите след като компонентът е монтиран
     const currentPageNum = getCurrentPageFromRoute();
     await loadProductsForPage(currentPageNum, categoryFilters);
-  } catch (error) {
-    console.error('Грешка при зареждане на продукти по slug:', error);
-  }
-} else {
-  // Ако нямаме slug, зареждаме първата страница без категория филтър
-  try {
-    const generalFilters = {
-      search: route.query.search as string,
-      priceMin: route.query.priceMin ? parseFloat(route.query.priceMin as string) : undefined,
-      priceMax: route.query.priceMax ? parseFloat(route.query.priceMax as string) : undefined,
-      onSale: route.query.sale === 'true' ? true : undefined,
-      orderby: (route.query.orderby as string) || 'DATE',
-    };
 
-    const currentPageNum = getCurrentPageFromRoute();
-    await loadProductsForPage(currentPageNum, generalFilters);
-  } catch (error) {
-    console.error('Грешка при зареждане на всички продукти:', error);
+  // Ако има query параметри, обновяваме списъка
+  if (!isQueryEmpty.value) {
+    updateProductList();
   }
-}
+});
 
 // Преминаваме към режим "зареден" след кратко време
 setTimeout(() => {
   isLoading.value = false;
 }, 500);
 
-// Актуализиране на списъка с продукти при нужда
-onMounted(() => {
-  if (!isQueryEmpty.value) updateProductList();
-});
-
-// Следим за промени в заявката и параметрите
 watch(
   () => route.query,
   () => {
@@ -220,7 +183,7 @@ if (matchingCategory.value?.seo?.schema?.raw) {
 
 <template>
   <div class="container px-2">
-    <div v-if="!isLoading && products && products.length" class="flex items-start gap-16">
+    <div class="flex items-start gap-16" v-if="products?.length || true">
       <Filters v-if="storeSettings.showFilters" :hide-categories="true" />
 
       <div class="w-full">
@@ -232,21 +195,12 @@ if (matchingCategory.value?.seo?.schema?.raw) {
         <ProductGrid />
       </div>
     </div>
-    <div v-else-if="isLoading" class="py-16 text-center">
-      <div class="inline-block p-4 text-gray-500">
-        <div class="h-8 w-8 border-t-2 border-primary border-solid rounded-full mx-auto animate-spin mb-4"></div>
-        <p>Loading products...</p>
-      </div>
-    </div>
+
     <NoProductsFound v-else>
       <div class="text-center">
-        <h2 class="text-xl font-bold mb-4">{{ slug ? 'No products found in this category.' : 'All Products' }}</h2>
-        <div v-if="slug" class="mt-4 text-sm text-gray-600 border p-4 rounded text-left inline-block">
-          <p><strong>URL slug:</strong> {{ slug || 'Not provided' }}</p>
-          <p><strong>Decoded slug:</strong> {{ decodedSlug || 'Not decoded' }}</p>
-        </div>
-        <div v-else class="mt-4 text-sm text-gray-600">
-          <p>Please select a category from the menu.</p>
+        <h2 class="text-xl font-bold mb-4">No products found in this category.</h2>
+        <div class="mt-4 text-sm text-gray-600 border p-4 rounded text-left inline-block">
+          <p><strong>Category slug:</strong> {{ slug || 'Not provided' }}</p>
         </div>
       </div>
     </NoProductsFound>
