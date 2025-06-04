@@ -78,11 +78,11 @@
       "handle": "filesystem"
     },
     {
-      "src": "/__nuxt_error",
-      "dest": "/__nitro"
+      "src": "(?<url>/products/page/.*)",
+      "dest": "/__nitro--products-page?url=$url"
     },
     {
-      "src": "/products",
+      "src": "/__nuxt_error",
       "dest": "/__nitro"
     },
     {
@@ -96,6 +96,10 @@
     {
       "src": "(?<url>/produkt/.*)",
       "dest": "/__nitro--produkt?url=$url"
+    },
+    {
+      "src": "/products",
+      "dest": "/products?url=$url"
     },
     {
       "src": "(?<url>/produkt-kategoriya/.*)",
@@ -112,6 +116,10 @@
     {
       "src": "(?<url>/my-account/.*)",
       "dest": "/__nitro"
+    },
+    {
+      "src": "/sitemap.xml",
+      "dest": "/sitemap.xml?url=$url"
     },
     {
       "src": "/(.*)",

@@ -1,0 +1,1 @@
+{"id":"9197deda-45d5-42e0-87d9-64584dffdc75","timestamp":1749031008823,"matcher":{"static":{},"wildcard":{"/product":{"redirect":"/produkt/**"},"/product-category":{"redirect":"/produkt-kategoriya/**"}},"dynamic":{}},"prerendered":["/contact","/products","/categories","/"]}

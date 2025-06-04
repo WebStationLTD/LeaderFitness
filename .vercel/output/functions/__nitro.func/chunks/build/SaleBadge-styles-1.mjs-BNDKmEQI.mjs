@@ -1,2 +1,0 @@
-const e=".red-badge[data-v-c1bcf961]{border-radius:.375rem;z-index:10;--tw-bg-opacity:1;background-color:rgb(248 113 113/var(--tw-bg-opacity,1));font-size:.75rem;letter-spacing:-.025em;line-height:1.5rem;padding-left:.375rem;padding-right:.375rem;--tw-text-opacity:1;background:#000 linear-gradient(0deg,#f87171,#f87171);color:rgb(255 255 255/var(--tw-text-opacity,1))}";export{e as S};
-//# sourceMappingURL=SaleBadge-styles-1.mjs-BNDKmEQI.mjs.map
