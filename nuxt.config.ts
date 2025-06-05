@@ -22,11 +22,10 @@ export default defineNuxtConfig({
     compressPublicAssets: true,
     timing: true,
     storage: {
-      data: {
-        driver: 'vercelKV'
-      },
       cache: {
-        driver: 'vercelKV'
+        driver: 'memory',
+        max: 100,
+        ttl: 1800
       }
     },
     routeRules: {
