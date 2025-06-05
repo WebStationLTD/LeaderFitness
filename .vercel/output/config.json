@@ -4,41 +4,11 @@
     "contact/index.html": {
       "path": "contact"
     },
-    "categories/index.html": {
-      "path": "categories"
-    },
     "products/index.html": {
       "path": "products"
     },
-    "products/page/8/index.html": {
-      "path": "products/page/8"
-    },
-    "products/page/9/index.html": {
-      "path": "products/page/9"
-    },
-    "products/page/10/index.html": {
-      "path": "products/page/10"
-    },
-    "products/page/1/index.html": {
-      "path": "products/page/1"
-    },
-    "products/page/2/index.html": {
-      "path": "products/page/2"
-    },
-    "products/page/4/index.html": {
-      "path": "products/page/4"
-    },
-    "products/page/5/index.html": {
-      "path": "products/page/5"
-    },
-    "products/page/6/index.html": {
-      "path": "products/page/6"
-    },
-    "products/page/3/index.html": {
-      "path": "products/page/3"
-    },
-    "products/page/7/index.html": {
-      "path": "products/page/7"
+    "categories/index.html": {
+      "path": "categories"
     },
     "index.html": {
       "path": ""
@@ -50,16 +20,6 @@
         "cache-control": "public, max-age=31536000, immutable"
       },
       "src": "/_nuxt/builds/meta/(.*)"
-    },
-    {
-      "headers": {
-        "access-control-allow-origin": "*",
-        "access-control-allow-methods": "*",
-        "access-control-allow-headers": "*",
-        "access-control-max-age": "0",
-        "cache-control": "s-maxage=3600, stale-while-revalidate=86400"
-      },
-      "src": "/products/page/(.*)"
     },
     {
       "headers": {
@@ -89,35 +49,30 @@
     },
     {
       "headers": {
-        "access-control-allow-origin": "*",
-        "access-control-allow-methods": "*",
-        "access-control-allow-headers": "*",
-        "access-control-max-age": "0",
-        "cache-control": "s-maxage=3600, stale-while-revalidate=86400"
+        "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        "Pragma": "no-cache"
       },
-      "src": "/produkt/(.*)"
+      "src": "/checkout/(.*)"
     },
     {
       "headers": {
-        "access-control-allow-origin": "*",
-        "access-control-allow-methods": "*",
-        "access-control-allow-headers": "*",
-        "access-control-max-age": "0",
-        "cache-control": "s-maxage=3600, stale-while-revalidate=86400"
+        "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        "Pragma": "no-cache"
       },
-      "src": "/produkt-kategoriya/(.*)"
+      "src": "/cart"
+    },
+    {
+      "headers": {
+        "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+        "Pragma": "no-cache"
+      },
+      "src": "/my-account/(.*)"
     },
     {
       "headers": {
         "cache-control": "public, max-age=31536000, immutable"
       },
       "src": "/_nuxt/(.*)"
-    },
-    {
-      "headers": {
-        "Cache-Control": "public, s-maxage=1800, stale-while-revalidate=3600"
-      },
-      "src": "/(.*)"
     },
     {
       "src": "/_nuxt/builds/meta(.*)",
@@ -144,8 +99,8 @@
       "handle": "filesystem"
     },
     {
-      "src": "/products/page/[1-10]",
-      "dest": "/__nitro"
+      "src": "(?<url>/products/page/.*)",
+      "dest": "/__nitro--products-page?url=$url"
     },
     {
       "src": "/__nuxt_error",
@@ -153,15 +108,23 @@
     },
     {
       "src": "/categories",
-      "dest": "/__nitro"
+      "dest": "/categories?url=$url"
     },
     {
       "src": "/contact",
-      "dest": "/__nitro"
+      "dest": "/contact?url=$url"
     },
     {
       "src": "/products",
-      "dest": "/__nitro"
+      "dest": "/products?url=$url"
+    },
+    {
+      "src": "(?<url>/produkt-kategoriya/.*)",
+      "dest": "/__nitro--produkt-kategoriya?url=$url"
+    },
+    {
+      "src": "(?<url>/produkt/.*)",
+      "dest": "/__nitro--produkt?url=$url"
     },
     {
       "src": "(?<url>/checkout/.*)",
@@ -178,6 +141,10 @@
     {
       "src": "/sitemap.xml",
       "dest": "/sitemap.xml?url=$url"
+    },
+    {
+      "src": "(?<url>/)",
+      "dest": "/__nitro-index?url=$url"
     },
     {
       "src": "/(.*)",

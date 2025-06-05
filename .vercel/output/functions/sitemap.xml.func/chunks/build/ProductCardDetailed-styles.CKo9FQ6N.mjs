@@ -1,2 +1,2 @@
-globalThis.__timing__.logStart("Load chunks/build/ProductCardDetailed-styles.CKo9FQ6N");import{P as t}from"./ProductCardDetailed-styles-1.mjs-LD9e-yS-.mjs";const d=[t,t];export{d as default};globalThis.__timing__.logEnd("Load chunks/build/ProductCardDetailed-styles.CKo9FQ6N");
+import{P as s}from"./ProductCardDetailed-styles-1.mjs-LD9e-yS-.mjs";const t=[s,s];export{t as default};
 //# sourceMappingURL=ProductCardDetailed-styles.CKo9FQ6N.mjs.map
