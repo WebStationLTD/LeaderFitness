@@ -1,1 +1,0 @@
-import{am as a,c as l,o,t as i,a as s}from"./wATBLoar.js";const c={__name:"ResetFiltersButton",setup(m){const{resetFilter:t}=a();return(r,e)=>(o(),l("button",{class:"bg-primary rounded-lg font-bold mt-8 text-center text-white text-sm w-full p-2",onClick:e[0]||(e[0]=(...n)=>s(t)&&s(t)(...n))},i(r.$t("messages.general.clearFilters")),1))}};export{c as default};

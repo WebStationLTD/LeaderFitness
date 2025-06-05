@@ -10,76 +10,59 @@ export default defineNuxtConfig({
   ],
 
   experimental: {
-    payloadExtraction: true,
-    inlineSSRStyles: true,
-    renderJsonPayloads: true,
-    componentIslands: true
+    payloadExtraction: false,
+    inlineSSRStyles: false,
+    renderJsonPayloads: false,
+    componentIslands: false
   },
 
   nitro: {
     preset: 'vercel',
     minify: true,
     compressPublicAssets: true,
-    timing: true,
-    storage: {
-      cache: {
-        driver: 'memory',
-        max: 100,
-        ttl: 1800
-      }
-    },
+    timing: false,
     routeRules: {
-      // Static pages
+      // Static pages with basic caching
       "/": { 
-        prerender: true,
-        cache: {
-          maxAge: 3600,
-          staleWhileRevalidate: 86400
-        }
+        static: true,
+        swr: 3600
       },
       "/categories": { 
-        prerender: true,
-        cache: {
-          maxAge: 7200,
-          staleWhileRevalidate: 86400
-        }
+        static: true,
+        swr: 7200
       },
       "/contact": { 
-        prerender: true,
-        cache: {
-          maxAge: 86400,
-          staleWhileRevalidate: 86400
-        }
+        static: true,
+        swr: 86400
       },
 
-      // Product listing pages with hybrid rendering
+      // Product listing pages
       "/products": { 
-        prerender: true,
+        swr: true,
         cache: {
-          maxAge: 900,
-          staleWhileRevalidate: 3600
+          maxAge: 900
         }
       },
       "/products/page/**": { 
+        swr: true,
         cache: {
-          maxAge: 900,
-          staleWhileRevalidate: 3600
+          maxAge: 900
         }
       },
 
-      // Category pages with hybrid rendering
+      // Category pages
       "/produkt-kategoriya/**": { 
+        swr: true,
         cache: {
-          maxAge: 1800,
-          staleWhileRevalidate: 7200
+          maxAge: 1800
         }
       },
 
-      // Product pages with hybrid rendering
+      // Product pages
       "/produkt/**": { 
+        swr: true,
         cache: {
-          maxAge: 3600,
-          staleWhileRevalidate: 86400
+          maxAge: 3600
         }
       },
 
@@ -107,11 +90,7 @@ export default defineNuxtConfig({
       graphql: {
         timeout: 8000,
         retries: 1,
-        maxOperations: 5,
-        cachePolicy: {
-          maxAge: 900,
-          staleWhileRevalidate: 3600
-        }
+        maxOperations: 5
       }
     },
   },
@@ -126,6 +105,8 @@ export default defineNuxtConfig({
         { name: 'viewport', content: 'width=device-width, initial-scale=1, maximum-scale=5' }
       ]
     },
+    buildAssetsDir: '/_nuxt/',
+    cdnURL: process.env.NODE_ENV === 'production' ? 'https://leader-fitness.vercel.app' : undefined,
   },
 
   sitemap: {

@@ -1,19 +1,6 @@
 {
   "version": 3,
-  "overrides": {
-    "products/index.html": {
-      "path": "products"
-    },
-    "contact/index.html": {
-      "path": "contact"
-    },
-    "categories/index.html": {
-      "path": "categories"
-    },
-    "index.html": {
-      "path": ""
-    }
-  },
+  "overrides": {},
   "routes": [
     {
       "headers": {
@@ -78,8 +65,32 @@
       "handle": "filesystem"
     },
     {
+      "src": "(?<url>/products/page/.*)",
+      "dest": "/__nitro--products-page?url=$url"
+    },
+    {
       "src": "/__nuxt_error",
       "dest": "/__nitro"
+    },
+    {
+      "src": "/categories",
+      "dest": "/categories?url=$url"
+    },
+    {
+      "src": "/contact",
+      "dest": "/contact?url=$url"
+    },
+    {
+      "src": "/products",
+      "dest": "/products?url=$url"
+    },
+    {
+      "src": "(?<url>/produkt-kategoriya/.*)",
+      "dest": "/__nitro--produkt-kategoriya?url=$url"
+    },
+    {
+      "src": "(?<url>/produkt/.*)",
+      "dest": "/__nitro--produkt?url=$url"
     },
     {
       "src": "(?<url>/checkout/.*)",
@@ -96,6 +107,10 @@
     {
       "src": "/sitemap.xml",
       "dest": "/sitemap.xml?url=$url"
+    },
+    {
+      "src": "(?<url>/)",
+      "dest": "/__nitro-index?url=$url"
     },
     {
       "src": "/(.*)",
