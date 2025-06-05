@@ -18,105 +18,86 @@ export default defineNuxtConfig({
 
   nitro: {
     preset: 'vercel',
-    prerender: {
-      routes: [
-        "/",
-        "/products",
-        "/categories",
-        "/contact",
-      ],
-      crawlLinks: false,
-      failOnError: false,
-    },
     minify: true,
-    compression: {
-      gzip: true,
-      brotli: true,
+    compressPublicAssets: true,
+    timing: true,
+    storage: {
+      data: {
+        driver: 'vercelKV'
+      },
+      cache: {
+        driver: 'vercelKV'
+      }
     },
     routeRules: {
       // Static pages
       "/": { 
-        static: true,
-        swr: 3600
+        prerender: true,
+        cache: {
+          maxAge: 3600,
+          staleWhileRevalidate: 86400
+        }
       },
       "/categories": { 
-        static: true,
-        swr: 7200
+        prerender: true,
+        cache: {
+          maxAge: 7200,
+          staleWhileRevalidate: 86400
+        }
       },
       "/contact": { 
-        static: true,
-        swr: 86400
+        prerender: true,
+        cache: {
+          maxAge: 86400,
+          staleWhileRevalidate: 86400
+        }
       },
 
-      // Product listing pages with ISR
+      // Product listing pages with hybrid rendering
       "/products": { 
-        isr: true,
+        prerender: true,
         cache: {
           maxAge: 900,
-          staleWhileRevalidate: 3600,
-          headersOnly: true
+          staleWhileRevalidate: 3600
         }
       },
       "/products/page/**": { 
-        isr: true,
         cache: {
           maxAge: 900,
-          staleWhileRevalidate: 3600,
-          headersOnly: true
+          staleWhileRevalidate: 3600
         }
       },
 
-      // Category pages with ISR
+      // Category pages with hybrid rendering
       "/produkt-kategoriya/**": { 
-        isr: true,
         cache: {
           maxAge: 1800,
-          staleWhileRevalidate: 7200,
-          headersOnly: true
+          staleWhileRevalidate: 7200
         }
       },
 
-      // Product pages with ISR
+      // Product pages with hybrid rendering
       "/produkt/**": { 
-        isr: true,
         cache: {
           maxAge: 3600,
-          staleWhileRevalidate: 86400,
-          headersOnly: true
+          staleWhileRevalidate: 86400
         }
       },
 
       // No-cache dynamic pages
       "/checkout/**": { 
         ssr: true, 
-        cache: false,
-        headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-          'Pragma': 'no-cache'
-        }
+        cache: false
       },
       "/cart": { 
         ssr: true, 
-        cache: false,
-        headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-          'Pragma': 'no-cache'
-        }
+        cache: false
       },
       "/my-account/**": { 
         ssr: true, 
-        cache: false,
-        headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
-          'Pragma': 'no-cache'
-        }
-      },
-    },
-    timing: false,
-    serverAssets: [{
-      baseName: "public",
-      dir: "public"
-    }]
+        cache: false
+      }
+    }
   },
 
   runtimeConfig: {
@@ -124,6 +105,15 @@ export default defineNuxtConfig({
       GQL_HOST: "https://leaderfitness.admin-panels.com/graphql",
       PRODUCT_CATEGORY_PERMALINK: "/produkt-kategoriya/",
       PRODUCTS_PER_PAGE: 12,
+      graphql: {
+        timeout: 8000,
+        retries: 1,
+        maxOperations: 5,
+        cachePolicy: {
+          maxAge: 900,
+          staleWhileRevalidate: 3600
+        }
+      }
     },
   },
 
