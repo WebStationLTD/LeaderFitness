@@ -1,3 +1,18 @@
+type InputMaybe<T> = T | null;
+type Ref<T> = { value: T };
+
+enum ProductsOrderByEnum {
+  DATE = 'DATE',
+  PRICE = 'PRICE',
+  RATING = 'RATING',
+  TITLE = 'TITLE'
+}
+
+enum OrderEnum {
+  ASC = 'ASC',
+  DESC = 'DESC'
+}
+
 interface ProductsPage {
   nodes: Product[];
   edges?: Array<{ cursor?: string | null; node: Product }>;
@@ -24,15 +39,7 @@ interface PaginationFilters {
 
 interface GraphQLResponse {
   data?: {
-    products?: {
-      pageInfo: {
-        hasNextPage: boolean;
-        hasPreviousPage: boolean;
-        startCursor: string | null;
-        endCursor: string | null;
-      };
-      nodes: Product[];
-    };
+    products?: ProductsPage;
   };
 }
 
@@ -53,17 +60,18 @@ interface Edge {
   node: Product;
 }
 
-interface Variables {
+interface GraphQLVariables {
   first?: number;
-  after?: string | null;
-  search?: string;
-  slug?: string[];
-  priceMin?: number;
-  priceMax?: number;
-  onSale?: boolean;
-  orderby?: string;
-  order?: string;
-  rating?: number[];
+  after?: InputMaybe<string> | Ref<InputMaybe<string>>;
+  before?: InputMaybe<string> | Ref<InputMaybe<string>>;
+  slug?: InputMaybe<string[]> | Ref<InputMaybe<string[]>>;
+  orderby?: InputMaybe<ProductsOrderByEnum> | Ref<InputMaybe<ProductsOrderByEnum>>;
+  order?: InputMaybe<OrderEnum> | Ref<InputMaybe<OrderEnum>>;
+  search?: InputMaybe<string> | Ref<InputMaybe<string>>;
+  priceMin?: InputMaybe<number> | Ref<InputMaybe<number>>;
+  priceMax?: InputMaybe<number> | Ref<InputMaybe<number>>;
+  onSale?: InputMaybe<boolean> | Ref<InputMaybe<boolean>>;
+  rating?: InputMaybe<number[]> | Ref<InputMaybe<number[]>>;
 }
 
 export function useProducts() {
@@ -91,14 +99,23 @@ export function useProducts() {
     try {
       const route = useRoute();
       
-      // Извличаме филтрите от URL
+      // Extract filters from URL and handle category filter
       const urlFilters = { ...filters };
+      let categorySlug: string | undefined;
       
-      // Обработваме category филтъра от URL
-      if (route.query.filter) {
+      // Check if we're on a category page and extract slug
+      if (route.name === 'produkt-kategoriya-slug' || route.name === 'produkt-kategoriya-page-pager') {
+        categorySlug = (route.params.categorySlug || route.params.slug) as string;
+      } else if (route.name === 'product-category-slug' || route.name === 'product-category-page-pager') {
+        categorySlug = route.params.slug as string;
+      }
+
+      // Set category filter from route params or URL filter
+      if (categorySlug) {
+        urlFilters.categoryIn = [categorySlug];
+      } else if (route.query.filter) {
         const filterStr = route.query.filter as string;
         if (filterStr.startsWith('category[')) {
-          // Извличаме категориите между [] и ги разделяме по запетая
           const categoryStr = filterStr.match(/category\[(.*?)\]/)?.[1] || '';
           const categories = categoryStr.split(',').filter(Boolean);
           if (categories.length > 0) {
@@ -107,125 +124,200 @@ export function useProducts() {
         }
       }
 
-      // За първата страница или при промяна на филтрите - директно зареждане
-      if (pageNumber === 1 || !currentCursor.value) {
-        await loadProducts(urlFilters, 'first');
+      // For server-side rendering or first page load
+      if (process.server || pageNumber === 1) {
+        try {
+          const variables: any = {
+            first: 12,
+            after: null,
+            orderby: ProductsOrderByEnum.DATE,
+            order: OrderEnum.DESC
+          };
+
+          // Only add slug if we have a category
+          if (urlFilters.categoryIn && urlFilters.categoryIn.length > 0) {
+            variables.slug = urlFilters.categoryIn;
+            console.log('Server-side category filter:', urlFilters.categoryIn);
+          }
+
+          // Add optional filters if they exist
+          if (urlFilters.search) variables.search = urlFilters.search;
+          if (urlFilters.priceMin) variables.priceMin = urlFilters.priceMin;
+          if (urlFilters.priceMax) variables.priceMax = urlFilters.priceMax;
+          if (urlFilters.onSale) variables.onSale = urlFilters.onSale;
+          if (urlFilters.rating) variables.rating = urlFilters.rating;
+          if (urlFilters.orderby) variables.orderby = urlFilters.orderby;
+          if (urlFilters.order) variables.order = urlFilters.order.toUpperCase();
+
+          // Log variables for debugging
+          console.log('Server-side query variables:', JSON.stringify(variables, null, 2));
+
+          // Try to get cached data first
+          const cacheKey = `products-${JSON.stringify(variables)}`;
+          const cachedData = getCacheEntry('getProducts', variables);
+          
+          if (cachedData?.products) {
+            console.log('Using cached products data');
+            currentPage.value = cachedData.products;
+            products.value = cachedData.products.nodes || [];
+            currentCursor.value = cachedData.products.pageInfo.endCursor || null;
+          } else {
+            console.log('Fetching fresh products data');
+            const { data } = await useAsyncGql('getProducts', variables);
+            
+            if (data.value?.products) {
+              console.log('Server-side products received:', data.value.products.nodes?.length);
+              currentPage.value = data.value.products;
+              products.value = data.value.products.nodes || [];
+              currentCursor.value = data.value.products.pageInfo.endCursor || null;
+              
+              // Cache the results
+              setCacheEntry('getProducts', variables, data.value);
+            } else {
+              console.error('No products data received from GraphQL');
+              products.value = [];
+              currentPage.value = null;
+              currentCursor.value = null;
+            }
+          }
+          
+          if (!totalProducts.value) {
+            await loadProductsCount(urlFilters);
+          }
+        } catch (error) {
+          console.error('Error during server-side products fetch:', error);
+          products.value = [];
+          currentPage.value = null;
+          currentCursor.value = null;
+        }
         return;
       }
 
-      // За останалите страници - използваме cursor навигация със запазени филтри
-      const variables: Variables = {
+      // For client-side navigation use cursor-based pagination
+      const variables: any = {
         first: 12,
-        ...urlFilters
+        orderby: ProductsOrderByEnum.DATE,
+        order: OrderEnum.DESC,
+        slug: urlFilters.categoryIn || null
       };
 
-      let currentPageData = null;
+      // Add optional filters if they exist
+      if (urlFilters.search) variables.search = urlFilters.search;
+      if (urlFilters.priceMin) variables.priceMin = urlFilters.priceMin;
+      if (urlFilters.priceMax) variables.priceMax = urlFilters.priceMax;
+      if (urlFilters.onSale) variables.onSale = urlFilters.onSale;
+      if (urlFilters.rating) variables.rating = urlFilters.rating;
+      if (urlFilters.orderby) variables.orderby = urlFilters.orderby;
+      if (urlFilters.order) variables.order = urlFilters.order.toUpperCase();
+
+      let currentPageData: ProductsPage | null = null;
       let cursor: string | null = null;
 
-      // GraphQL заявка
-      const query = `
-        query getProducts(
-          $after: String
-          $first: Int = 12
-          $search: String
-          $slug: [String]
-          $priceMin: Float
-          $priceMax: Float
-          $onSale: Boolean
-          $orderby: ProductsOrderByEnum = DATE
-          $order: OrderEnum = DESC
-          $rating: [Int]
-        ) {
-          products(
-            first: $first
-            after: $after
-            where: {
-              categoryIn: $slug
-              search: $search
-              minPrice: $priceMin
-              maxPrice: $priceMax
-              onSale: $onSale
-              rating: $rating
-              visibility: VISIBLE
-              status: "publish"
-              orderby: { field: $orderby, order: $order }
-            }
+      // Iterate to desired page using cursors
+      for (let i = 1; i <= pageNumber; i++) {
+        const currentVariables = {
+          ...variables,
+          after: i === 1 ? null : cursor
+        };
+
+        const config = useRuntimeConfig();
+        const gqlHost = config.public.GQL_HOST;
+        
+        if (!gqlHost) {
+          throw new Error('GraphQL host is not configured');
+        }
+
+        const query = `
+          query getProducts(
+            $after: String
+            $first: Int = 12
+            $search: String
+            $slug: [String]
+            $priceMin: Float
+            $priceMax: Float
+            $onSale: Boolean
+            $orderby: ProductsOrderByEnum = DATE
+            $order: OrderEnum = DESC
+            $rating: [Int]
           ) {
-            pageInfo {
-              hasNextPage
-              hasPreviousPage
-              startCursor
-              endCursor
-            }
-            nodes {
-              name
-              slug
-              type
-              databaseId
-              id
-              averageRating
-              reviewCount
-              ... on SimpleProduct {
-                price
-                regularPrice
-                salePrice
-                stockStatus
-                stockQuantity
-                image {
-                  sourceUrl
-                  altText
-                }
+            products(
+              first: $first
+              after: $after
+              where: {
+                categoryIn: $slug
+                search: $search
+                minPrice: $priceMin
+                maxPrice: $priceMax
+                onSale: $onSale
+                rating: $rating
+                visibility: VISIBLE
+                status: "publish"
+                orderby: { field: $orderby, order: $order }
               }
-              ... on VariableProduct {
-                price
-                regularPrice
-                salePrice
-                stockStatus
-                stockQuantity
-                image {
-                  sourceUrl
-                  altText
+            ) {
+              pageInfo {
+                hasNextPage
+                hasPreviousPage
+                startCursor
+                endCursor
+              }
+              nodes {
+                name
+                slug
+                type
+                databaseId
+                id
+                averageRating
+                reviewCount
+                ... on SimpleProduct {
+                  price
+                  regularPrice
+                  salePrice
+                  stockStatus
+                  stockQuantity
+                  image {
+                    sourceUrl
+                    altText
+                  }
                 }
-                variations {
-                  nodes {
-                    databaseId
-                    name
-                    price
-                    regularPrice
-                    salePrice
-                    stockStatus
-                    stockQuantity
-                    attributes {
-                      nodes {
-                        name
-                        value
+                ... on VariableProduct {
+                  price
+                  regularPrice
+                  salePrice
+                  stockStatus
+                  stockQuantity
+                  image {
+                    sourceUrl
+                    altText
+                  }
+                  variations {
+                    nodes {
+                      databaseId
+                      name
+                      price
+                      regularPrice
+                      salePrice
+                      stockStatus
+                      stockQuantity
+                      attributes {
+                        nodes {
+                          name
+                          value
+                        }
                       }
-                    }
-                    image {
-                      sourceUrl
-                      altText
+                      image {
+                        sourceUrl
+                        altText
+                      }
                     }
                   }
                 }
               }
             }
           }
-        }
-      `;
+        `;
 
-      // Итерираме до желаната страница, запазвайки филтрите
-      for (let i = 1; i <= pageNumber; i++) {
-        const currentVariables: Variables = {
-          ...variables,
-          after: i === 1 ? undefined : cursor,
-          // Използваме categoryIn масива директно като slug
-          slug: urlFilters.categoryIn
-        };
-
-        const config = useRuntimeConfig();
-        const gqlHost = config.public.GQL_HOST || 'https://leaderfitness.admin-panels.com/graphql';
-        
-        const response = await $fetch<GraphQLResponse>(gqlHost, {
+        const response: GraphQLResponse = await $fetch(gqlHost, {
           method: 'POST',
           body: {
             query,
@@ -237,7 +329,8 @@ export function useProducts() {
           currentPageData = response.data.products;
 
           if (i < pageNumber) {
-            cursor = currentPageData.pageInfo.endCursor;
+            const endCursor = currentPageData.pageInfo.endCursor;
+            cursor = endCursor || null;
             if (cursor && !previousCursors.value.includes(cursor)) {
               previousCursors.value.push(cursor);
             }
@@ -249,17 +342,12 @@ export function useProducts() {
         }
       }
 
-      // Зареждаме общия брой продукти само при нужда
+      // Load total count if needed
       if (!totalProducts.value) {
         await loadProductsCount(urlFilters);
       }
     } catch (error) {
-      console.error('Грешка при зареждане на продукти за страница:', error);
-      if (process.client) {
-        const route = useRoute();
-        console.error('URL филтри:', route.query.filter);
-        console.error('Обработени филтри:', filters);
-      }
+      console.error('Error loading products for page:', error);
     } finally {
       isLoading.value = false;
     }

@@ -10,7 +10,10 @@ export default defineNuxtConfig({
   ],
 
   experimental: {
-    payloadExtraction: true
+    payloadExtraction: true,
+    inlineSSRStyles: true,
+    renderJsonPayloads: true,
+    componentIslands: true
   },
 
   nitro: {
@@ -21,58 +24,95 @@ export default defineNuxtConfig({
         "/products",
         "/categories",
         "/contact",
-        "/products/page/1",
-        "/products/page/2",
-        "/products/page/3",
-        "/products/page/4",
-        "/products/page/5",
-        "/products/page/6",
-        "/products/page/7",
-        "/products/page/8",
-        "/products/page/9",
-        "/products/page/10"
       ],
       crawlLinks: false,
       failOnError: false,
     },
     minify: true,
-    compression: true,
+    compression: {
+      gzip: true,
+      brotli: true,
+    },
     routeRules: {
       // Static pages
-      "/": { static: true },
-      "/categories": { static: true },
-      "/contact": { static: true },
-      "/products": { static: true },
-      "/products/page/[1-10]": { static: true },
+      "/": { 
+        static: true,
+        swr: 3600
+      },
+      "/categories": { 
+        static: true,
+        swr: 7200
+      },
+      "/contact": { 
+        static: true,
+        swr: 86400
+      },
 
-      // Dynamic pages with edge caching
+      // Product listing pages with ISR
+      "/products": { 
+        isr: true,
+        cache: {
+          maxAge: 900,
+          staleWhileRevalidate: 3600,
+          headersOnly: true
+        }
+      },
       "/products/page/**": { 
-        cors: true,
-        headers: {
-          'cache-control': 's-maxage=3600, stale-while-revalidate=86400'
+        isr: true,
+        cache: {
+          maxAge: 900,
+          staleWhileRevalidate: 3600,
+          headersOnly: true
         }
       },
 
-      // Product and category pages with edge caching
-      "/produkt/**": { 
-        cors: true,
-        headers: {
-          'cache-control': 's-maxage=3600, stale-while-revalidate=86400'
-        }
-      },
+      // Category pages with ISR
       "/produkt-kategoriya/**": { 
-        cors: true,
-        headers: {
-          'cache-control': 's-maxage=3600, stale-while-revalidate=86400'
+        isr: true,
+        cache: {
+          maxAge: 1800,
+          staleWhileRevalidate: 7200,
+          headersOnly: true
         }
       },
 
-      // No-cache pages
-      "/checkout/**": { ssr: true, cache: false },
-      "/cart": { ssr: true, cache: false },
-      "/my-account/**": { ssr: true, cache: false },
+      // Product pages with ISR
+      "/produkt/**": { 
+        isr: true,
+        cache: {
+          maxAge: 3600,
+          staleWhileRevalidate: 86400,
+          headersOnly: true
+        }
+      },
+
+      // No-cache dynamic pages
+      "/checkout/**": { 
+        ssr: true, 
+        cache: false,
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache'
+        }
+      },
+      "/cart": { 
+        ssr: true, 
+        cache: false,
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache'
+        }
+      },
+      "/my-account/**": { 
+        ssr: true, 
+        cache: false,
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+          'Pragma': 'no-cache'
+        }
+      },
     },
-    timing: true,
+    timing: false,
     serverAssets: [{
       baseName: "public",
       dir: "public"
@@ -94,7 +134,7 @@ export default defineNuxtConfig({
         { rel: "dns-prefetch", href: "https://leaderfitness.admin-panels.com" },
       ],
       meta: [
-        { name: 'viewport', content: 'width=device-width, initial-scale=1, maximum-scale=1' }
+        { name: 'viewport', content: 'width=device-width, initial-scale=1, maximum-scale=5' }
       ]
     },
   },
@@ -102,12 +142,13 @@ export default defineNuxtConfig({
   sitemap: {
     siteUrl: "https://leaderfitness.admin-panels.com",
     excludes: [
-      "/checkout/order-received/**",
+      "/checkout/**",
       "/order-summary/**",
       "/my-account/**",
       "/oauth/**",
+      "/cart",
     ],
-    cacheTime: 1000 * 60 * 30,
+    cacheTime: 1000 * 60 * 60,
     routes: ["/", "/products", "/categories", "/contact", "/wishlist"],
   },
 
@@ -124,27 +165,34 @@ export default defineNuxtConfig({
           },
         },
         cachePolicy: {
-          maxAge: 3600,                // 1 час основен кеш
-          staleWhileRevalidate: 14400, // 4 часа stale данни
+          maxAge: 1800,
+          staleWhileRevalidate: 7200,
           typePolicies: {
             Product: {
-              maxAge: 14400,           // 4 часа
+              maxAge: 3600,
+              merge: true,
             },
             Category: {
-              maxAge: 28800,           // 8 часа
+              maxAge: 7200,
+              merge: true,
             },
             ProductVariation: {
-              maxAge: 3600,            // 1 час
+              maxAge: 1800,
+              merge: true,
             }
           }
         },
         batch: true,
-        batchMax: 15,                  // Намалено за по-малко натоварване
-        retry: 3,
-        retryDelay: (count: number) => Math.min(1000 * Math.pow(2, count), 15000),
+        batchMax: 5,
+        retry: 2,
+        retryDelay: (count: number) => Math.min(1000 * Math.pow(2, count), 5000),
         prefetch: true,
         defaultFetchOptions: {
-          timeout: 30000,              // 30 секунди за споделен хостинг
+          timeout: 8000,
+          headers: {
+            'Accept-Encoding': 'gzip, deflate, br',
+            'Connection': 'keep-alive'
+          }
         },
         fetchPolicy: 'cache-first',
       },
@@ -159,25 +207,37 @@ export default defineNuxtConfig({
       name: 'Leader Fitness',
       short_name: 'LeaderFitness',
       theme_color: '#ffffff',
+      background_color: '#ffffff',
+      display: 'standalone',
+      orientation: 'portrait',
+      scope: '/',
+      start_url: '/',
       icons: [
         {
           src: 'pwa-192x192.png',
           sizes: '192x192',
           type: 'image/png',
         },
+        {
+          src: 'pwa-512x512.png',
+          sizes: '512x512',
+          type: 'image/png',
+          purpose: 'any maskable'
+        },
       ]
     },
     workbox: {
-      globPatterns: ['**/*.{js,css,html,png,jpg,jpeg,webp}'],
+      globPatterns: ['**/*.{js,css,html,png,jpg,jpeg,webp,woff2}'],
       runtimeCaching: [
         {
           urlPattern: '/graphql',
-          handler: 'StaleWhileRevalidate',
+          handler: 'NetworkFirst',
           options: {
             cacheName: 'api-cache',
+            networkTimeoutSeconds: 10,
             expiration: {
-              maxEntries: 200,
-              maxAgeSeconds: 86400 * 2 // 48 часа
+              maxEntries: 100,
+              maxAgeSeconds: 3600
             },
             cacheableResponse: {
               statuses: [0, 200]
@@ -190,21 +250,29 @@ export default defineNuxtConfig({
           options: {
             cacheName: 'image-cache',
             expiration: {
-              maxEntries: 500,
-              maxAgeSeconds: 86400 * 7 // 7 дни
+              maxEntries: 100,
+              maxAgeSeconds: 86400 * 7
+            },
+            cacheableResponse: {
+              statuses: [0, 200]
+            }
+          }
+        },
+        {
+          urlPattern: /\.(css|js|woff2)$/,
+          handler: 'StaleWhileRevalidate',
+          options: {
+            cacheName: 'static-cache',
+            expiration: {
+              maxEntries: 50,
+              maxAgeSeconds: 86400
             }
           }
         }
-      ]
+      ],
+      cleanupOutdatedCaches: true,
+      skipWaiting: true,
+      clientsClaim: true
     }
-  },
-
-  routeRules: {
-    // Global rate limiting
-    "/**": {
-      headers: {
-        "Cache-Control": "public, s-maxage=1800, stale-while-revalidate=3600"
-      }
-    }
-  },
+  }
 });
