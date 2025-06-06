@@ -61,17 +61,23 @@ interface Edge {
 }
 
 interface GraphQLVariables {
-  first?: number;
-  after?: InputMaybe<string> | Ref<InputMaybe<string>>;
-  before?: InputMaybe<string> | Ref<InputMaybe<string>>;
-  slug?: InputMaybe<string[]> | Ref<InputMaybe<string[]>>;
-  orderby?: InputMaybe<ProductsOrderByEnum> | Ref<InputMaybe<ProductsOrderByEnum>>;
-  order?: InputMaybe<OrderEnum> | Ref<InputMaybe<OrderEnum>>;
-  search?: InputMaybe<string> | Ref<InputMaybe<string>>;
-  priceMin?: InputMaybe<number> | Ref<InputMaybe<number>>;
-  priceMax?: InputMaybe<number> | Ref<InputMaybe<number>>;
-  onSale?: InputMaybe<boolean> | Ref<InputMaybe<boolean>>;
-  rating?: InputMaybe<number[]> | Ref<InputMaybe<number[]>>;
+  first?: number | undefined;
+  last?: number | undefined;
+  after?: InputMaybe<string> | undefined;
+  before?: InputMaybe<string> | undefined;
+  slug?: InputMaybe<string[]> | undefined;
+  search?: InputMaybe<string> | undefined;
+  priceMin?: InputMaybe<number> | undefined;
+  priceMax?: InputMaybe<number> | undefined;
+  onSale?: InputMaybe<boolean> | undefined;
+  orderby?: InputMaybe<ProductsOrderByEnum> | undefined;
+  order?: InputMaybe<OrderEnum> | undefined;
+  rating?: InputMaybe<number[]> | undefined;
+}
+
+interface CacheEntry {
+  products: ProductsPage;
+  timestamp: number;
 }
 
 export function useProducts() {
@@ -86,9 +92,6 @@ export function useProducts() {
   // Pagination state
   const currentCursor = useState<string | null>('currentCursor', () => null);
   const previousCursors = useState<string[]>('previousCursors', () => []);
-
-  // Добавяме prefetched state
-  const prefetchedProducts = useState<{[key: string]: ProductsPage}>('prefetchedProducts', () => ({}));
 
   /**
    * Зарежда продукти за конкретна страница
@@ -153,7 +156,6 @@ export function useProducts() {
           console.log('Server-side query variables:', JSON.stringify(variables, null, 2));
 
           // Try to get cached data first
-          const cacheKey = `products-${JSON.stringify(variables)}`;
           const cachedData = getCacheEntry('getProducts', variables);
           
           if (cachedData?.products) {
@@ -181,9 +183,8 @@ export function useProducts() {
             }
           }
           
-          if (!totalProducts.value) {
-            await loadProductsCount(urlFilters);
-          }
+          // Always load products count after getting products
+          await loadProductsCount(urlFilters);
         } catch (error) {
           console.error('Error during server-side products fetch:', error);
           products.value = [];
@@ -227,110 +228,120 @@ export function useProducts() {
           throw new Error('GraphQL host is not configured');
         }
 
-        const query = `
-          query getProducts(
-            $after: String
-            $first: Int = 12
-            $search: String
-            $slug: [String]
-            $priceMin: Float
-            $priceMax: Float
-            $onSale: Boolean
-            $orderby: ProductsOrderByEnum = DATE
-            $order: OrderEnum = DESC
-            $rating: [Int]
-          ) {
-            products(
-              first: $first
-              after: $after
-              where: {
-                categoryIn: $slug
-                search: $search
-                minPrice: $priceMin
-                maxPrice: $priceMax
-                onSale: $onSale
-                rating: $rating
-                visibility: VISIBLE
-                status: "publish"
-                orderby: { field: $orderby, order: $order }
-              }
-            ) {
-              pageInfo {
-                hasNextPage
-                hasPreviousPage
-                startCursor
-                endCursor
-              }
-              nodes {
-                name
-                slug
-                type
-                databaseId
-                id
-                averageRating
-                reviewCount
-                ... on SimpleProduct {
-                  price
-                  regularPrice
-                  salePrice
-                  stockStatus
-                  stockQuantity
-                  image {
-                    sourceUrl
-                    altText
-                  }
-                }
-                ... on VariableProduct {
-                  price
-                  regularPrice
-                  salePrice
-                  stockStatus
-                  stockQuantity
-                  image {
-                    sourceUrl
-                    altText
-                  }
-                  variations {
+        // Try to get cached data first
+        const cachedData = getCacheEntry('getProducts', currentVariables);
+
+        if (cachedData?.products) {
+          console.log('Using cached products data for page', i);
+          currentPageData = cachedData.products;
+        } else {
+          const response: GraphQLResponse = await $fetch<GraphQLResponse>(gqlHost, {
+            method: 'POST',
+            body: {
+              query: `
+                query getProducts(
+                  $after: String
+                  $first: Int = 12
+                  $search: String
+                  $slug: [String]
+                  $priceMin: Float
+                  $priceMax: Float
+                  $onSale: Boolean
+                  $orderby: ProductsOrderByEnum = DATE
+                  $order: OrderEnum = DESC
+                  $rating: [Int]
+                ) {
+                  products(
+                    first: $first
+                    after: $after
+                    where: {
+                      categoryIn: $slug
+                      search: $search
+                      minPrice: $priceMin
+                      maxPrice: $priceMax
+                      onSale: $onSale
+                      rating: $rating
+                      visibility: VISIBLE
+                      status: "publish"
+                      orderby: { field: $orderby, order: $order }
+                    }
+                  ) {
+                    pageInfo {
+                      hasNextPage
+                      hasPreviousPage
+                      startCursor
+                      endCursor
+                    }
                     nodes {
-                      databaseId
                       name
-                      price
-                      regularPrice
-                      salePrice
-                      stockStatus
-                      stockQuantity
-                      attributes {
-                        nodes {
-                          name
-                          value
+                      slug
+                      type
+                      databaseId
+                      id
+                      averageRating
+                      reviewCount
+                      ... on SimpleProduct {
+                        price
+                        regularPrice
+                        salePrice
+                        stockStatus
+                        stockQuantity
+                        image {
+                          sourceUrl
+                          altText
                         }
                       }
-                      image {
-                        sourceUrl
-                        altText
+                      ... on VariableProduct {
+                        price
+                        regularPrice
+                        salePrice
+                        stockStatus
+                        stockQuantity
+                        image {
+                          sourceUrl
+                          altText
+                        }
+                        variations {
+                          nodes {
+                            databaseId
+                            name
+                            price
+                            regularPrice
+                            salePrice
+                            stockStatus
+                            stockQuantity
+                            attributes {
+                              nodes {
+                                name
+                                value
+                              }
+                            }
+                            image {
+                              sourceUrl
+                              altText
+                            }
+                          }
+                        }
                       }
                     }
                   }
                 }
-              }
+              `,
+              variables: currentVariables
             }
+          });
+
+          if (response.data?.products) {
+            currentPageData = response.data.products;
+            // Cache the results
+            setCacheEntry('getProducts', currentVariables, response.data);
           }
-        `;
+        }
 
-        const response: GraphQLResponse = await $fetch(gqlHost, {
-          method: 'POST',
-          body: {
-            query,
-            variables: currentVariables
-          }
-        });
-
-        if (response.data?.products) {
-          currentPageData = response.data.products;
-
+        if (currentPageData) {
           if (i < pageNumber) {
-            const endCursor = currentPageData.pageInfo.endCursor;
-            cursor = endCursor || null;
+            const endCursor: string | null = currentPageData.pageInfo.endCursor || null;
+            cursor = endCursor;
             if (cursor && !previousCursors.value.includes(cursor)) {
               previousCursors.value.push(cursor);
             }
@@ -342,10 +353,8 @@ export function useProducts() {
         }
       }
 
-      // Load total count if needed
-      if (!totalProducts.value) {
-        await loadProductsCount(urlFilters);
-      }
+      // Always load products count after getting products
+      await loadProductsCount(urlFilters);
     } catch (error) {
       console.error('Error loading products for page:', error);
     } finally {
@@ -359,34 +368,38 @@ export function useProducts() {
   async function loadProducts(filters: PaginationFilters = {}, direction: 'next' | 'prev' | 'first' = 'first', isPrefetch = false): Promise<void> {
     // Ако е prefetch режим, проверяваме дали вече имаме кеширани данни
     const cacheKey = `${direction}-${JSON.stringify(filters)}`;
-    if (!isPrefetch && prefetchedProducts.value[cacheKey]) {
-      currentPage.value = prefetchedProducts.value[cacheKey];
-      products.value = currentPage.value.nodes || [];
-      delete prefetchedProducts.value[cacheKey];
+    
+    // Prepare variables with correct types
+    const orderby = filters.orderby || ProductsOrderByEnum.DATE;
+    const order = filters.order ? filters.order.toUpperCase() : OrderEnum.DESC;
+    
+    const variables: any = {
+      first: direction === 'prev' ? undefined : 12,
+      last: direction === 'prev' ? 12 : undefined,
+      before: direction === 'prev' ? previousCursors.value[previousCursors.value.length - 2] || null : undefined,
+      after: direction === 'next' ? currentCursor.value : undefined,
+      search: filters.search || undefined,
+      slug: filters.categoryIn?.length ? filters.categoryIn : undefined,
+      priceMin: filters.priceMin || undefined,
+      priceMax: filters.priceMax || undefined,
+      onSale: filters.onSale || undefined,
+      orderby,
+      order,
+      rating: filters.rating?.length ? filters.rating : undefined
+    };
+
+    const cachedData = getCacheEntry('getProducts', variables);
+    if (!isPrefetch && cachedData?.products) {
+      currentPage.value = cachedData.products;
+      products.value = cachedData.products.nodes || [];
       return;
     }
 
     if (!isPrefetch) {
-    isLoading.value = true;
+      isLoading.value = true;
     }
 
     try {
-      const variables: any = {
-        first: direction === 'prev' ? undefined : 12,
-        last: direction === 'prev' ? 12 : undefined,
-        after: direction === 'next' ? currentCursor.value : undefined,
-        before: direction === 'prev' ? previousCursors.value[previousCursors.value.length - 2] || null : undefined,
-        search: filters.search || undefined,
-        slug: filters.categoryIn?.length ? filters.categoryIn : undefined,
-        priceMin: filters.priceMin || undefined,
-        priceMax: filters.priceMax || undefined,
-        onSale: filters.onSale || undefined,
-        orderby: filters.orderby || 'DATE',
-        order: filters.order ? filters.order.toUpperCase() : 'DESC',
-        rating: filters.rating?.length ? filters.rating : undefined,
-      };
-
-      // Проверяваме за кеширани данни
       const query = `
         query getProducts(
           $after: String
@@ -501,22 +514,26 @@ export function useProducts() {
 
         if (productsData) {
           if (isPrefetch) {
-            prefetchedProducts.value[cacheKey] = productsData;
+            setCacheEntry('getProducts', variables, productsData);
           } else {
             currentPage.value = productsData;
             products.value = productsData.nodes || [];
+            // Зареждаме общия брой продукти при всяка заявка
+            await loadProductsCount(filters);
           }
         }
       } else {
         // За server-side рендериране използваме useAsyncGql
-      const { data } = await useAsyncGql('getProducts', variables);
+        const { data } = await useAsyncGql('getProducts', variables);
 
-      if (data.value?.products) {
+        if (data.value?.products) {
           if (isPrefetch) {
-            prefetchedProducts.value[cacheKey] = data.value.products;
+            setCacheEntry('getProducts', variables, data.value.products);
           } else {
-        currentPage.value = data.value.products;
-        products.value = data.value.products.nodes || [];
+            currentPage.value = data.value.products;
+            products.value = data.value.products.nodes || [];
+            // Зареждаме общия брой продукти при всяка заявка
+            await loadProductsCount(filters);
           }
         }
       }
@@ -599,12 +616,6 @@ export function useProducts() {
 
       if (process.client) {
         // Проверяваме за кеширани данни
-        const cachedData = getCacheEntry(countQuery, countVariables);
-        if (cachedData?.edges) {
-          totalProducts.value = cachedData.edges.length;
-          return;
-        }
-
         const config = useRuntimeConfig();
         const gqlHost = config.public.GQL_HOST || 'https://leaderfitness.admin-panels.com/graphql';
         const response = await $fetch<GraphQLCountResponse>(gqlHost, {
@@ -617,8 +628,6 @@ export function useProducts() {
 
         if (response.data?.products?.edges) {
           totalProducts.value = response.data.products.edges.length;
-          // Кешираме резултата
-          setCacheEntry(countQuery, countVariables, response.data.products);
         }
       } else {
         // За server-side рендериране използваме useAsyncGql
@@ -790,7 +799,6 @@ export function useProducts() {
     isLoading,
     totalProducts,
     previousCursors,
-    prefetchedProducts,
     loadProducts,
     loadProductsForPage,
     nextPage,
