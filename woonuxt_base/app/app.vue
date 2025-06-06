@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import '@/assets/css/gutenberg.css';
 const route = useRoute();
 const { isShowingCart, toggleCart } = useCart();
 const { isShowingMobileMenu, toggleMobileMenu, addBodyClass, removeBodyClass } = useHelpers();
@@ -34,7 +33,7 @@ useHead({
     </Transition>
 
     <Transition name="slide-from-left">
-      <MobileMenu v-if="isShowingMobileMenu" />
+      <LazyMobileMenu v-if="isShowingMobileMenu" />
     </Transition>
 
     <NuxtPage />

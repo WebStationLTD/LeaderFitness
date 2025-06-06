@@ -1,0 +1,2 @@
+const t="tbody tr[data-v-a02a7c56]:nth-child(odd){background-color:#fafafa}tbody tr[data-v-a02a7c56]{font-size:.875rem;line-height:1.25rem;--tw-text-opacity:1;color:rgb(107 114 128/var(--tw-text-opacity,1))}tbody tr[data-v-a02a7c56]:hover{--tw-text-opacity:1;color:rgb(31 41 55/var(--tw-text-opacity,1))}td[data-v-a02a7c56],th[data-v-a02a7c56]{padding:.5rem .75rem}";export{t};
+//# sourceMappingURL=OrderList-styles-1.mjs-DMbudXo_.mjs.map

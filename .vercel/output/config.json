@@ -78,20 +78,20 @@
       "handle": "filesystem"
     },
     {
-      "src": "/__nuxt_error",
-      "dest": "/__nitro"
+      "src": "(?<url>/products/page/.*)",
+      "dest": "/__nitro--products-page?url=$url"
     },
     {
-      "src": "/categories",
-      "dest": "/__nitro"
+      "src": "(?<url>/produkt-kategoriya/.*)",
+      "dest": "/__nitro--produkt-kategoriya?url=$url"
     },
     {
-      "src": "/contact",
-      "dest": "/__nitro"
+      "src": "(?<url>/produkt/.*)",
+      "dest": "/__nitro--produkt?url=$url"
     },
     {
-      "src": "/products",
-      "dest": "/__nitro"
+      "src": "(?<url>/blog/.*)",
+      "dest": "/__nitro--blog?url=$url"
     },
     {
       "src": "/sitemap.xml",

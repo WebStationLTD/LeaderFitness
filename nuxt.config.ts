@@ -9,11 +9,14 @@ export default defineNuxtConfig({
   ],
 
   experimental: {
-    payloadExtraction: false
+    payloadExtraction: true,
   },
 
   nitro: {
     preset: 'vercel',
+    future: {
+      nativeSWR: true
+    },
     prerender: {
       routes: [
         "/",
@@ -36,37 +39,21 @@ export default defineNuxtConfig({
       "/contact": { static: true },
       "/products": { static: true },
 
-      // Dynamic pages with optimized caching
+      // Dynamic pages with ISR
       "/products/page/**": { 
-        cache: {
-          maxAge: 60,
-          staleMaxAge: 3600,
-          swr: true
-        }
+        isr: 60
       },
 
       "/produkt-kategoriya/**": { 
-        cache: {
-          maxAge: 60,
-          staleMaxAge: 3600,
-          swr: true
-        }
+        isr: 60
       },
 
       "/produkt/**": { 
-        cache: {
-          maxAge: 60,
-          staleMaxAge: 3600,
-          swr: true
-        }
+        isr: 60
       },
 
       "/blog/**": { 
-        cache: {
-          maxAge: 60,
-          staleMaxAge: 3600,
-          swr: true
-        }
+        isr: 60
       },
 
       // No-cache pages
@@ -166,12 +153,55 @@ export default defineNuxtConfig({
     build: {
       rollupOptions: {
         output: {
-          manualChunks: {
-            'graphql': ['graphql'],
-            'vue': ['vue', 'vue-router'],
+          manualChunks(id: string) {
+            // Vendor chunks
+            if (id.includes('node_modules')) {
+              if (id.includes('@headlessui') || id.includes('@heroicons')) {
+                return 'vendor-ui';
+              }
+              if (id.includes('vue') || id.includes('graphql')) {
+                return 'vendor-core';
+              }
+              return 'vendor';
+            }
+            
+            // App chunks
+            if (id.includes('composables/')) {
+              return 'features';
+            }
+            if (id.includes('components/')) {
+              return 'components';
+            }
+            if (id.includes('pages/')) {
+              return 'pages';
+            }
           }
         }
+      },
+      chunkSizeWarningLimit: 1000,
+      cssCodeSplit: true,
+      minify: true,
+      sourcemap: false
+    },
+    css: {
+      devSourcemap: false,
+      preprocessorOptions: {
+        postcss: {
+          plugins: [
+            'autoprefixer',
+            ['cssnano', {
+              preset: ['default', {
+                discardComments: { removeAll: true },
+                normalizeWhitespace: false
+              }]
+            }]
+          ]
+        }
       }
+    },
+    optimizeDeps: {
+      include: ['vue', 'vue-router', 'graphql'],
+      exclude: ['fsevents']
     }
   }
 });
