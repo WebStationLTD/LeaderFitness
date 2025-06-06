@@ -36,24 +36,36 @@ export default defineNuxtConfig({
       "/contact": { static: true },
       "/products": { static: true },
 
-      // Dynamic pages with cache
+      // Dynamic pages with optimized caching
       "/products/page/**": { 
         cache: {
-          maxAge: 3600
+          maxAge: 60,
+          staleMaxAge: 3600,
+          swr: true
         }
       },
 
-      // Category pages with cache
       "/produkt-kategoriya/**": { 
         cache: {
-          maxAge: 3600
+          maxAge: 60,
+          staleMaxAge: 3600,
+          swr: true
         }
       },
 
-      // Product pages with cache
       "/produkt/**": { 
         cache: {
-          maxAge: 3600
+          maxAge: 60,
+          staleMaxAge: 3600,
+          swr: true
+        }
+      },
+
+      "/blog/**": { 
+        cache: {
+          maxAge: 60,
+          staleMaxAge: 3600,
+          swr: true
         }
       },
 
@@ -110,40 +122,42 @@ export default defineNuxtConfig({
         host: "https://leaderfitness.admin-panels.com/graphql",
         tokenStorage: {
           cookieOptions: {
-            name: "authToken",
-            maxAge: 60 * 60 * 24 * 7,
+            maxAge: 60 * 60 * 24,
             sameSite: "Lax",
             secure: true,
           },
         },
         cachePolicy: {
-          maxAge: 1800,
-          staleWhileRevalidate: 7200,
+          maxAge: 60,
+          staleWhileRevalidate: 3600,
           typePolicies: {
             Product: {
-              maxAge: 3600,
+              maxAge: 300,
             },
             Category: {
-              maxAge: 7200,
+              maxAge: 600,
             },
             ProductVariation: {
-              maxAge: 1800,
+              maxAge: 300,
+            },
+            Post: {
+              maxAge: 600,
             }
           }
         },
         batch: true,
-        batchMax: 10,
-        retry: 2,
-        retryDelay: (count: number) => Math.min(1000 * Math.pow(2, count), 5000),
+        batchMax: 5,
+        retry: 1,
+        retryDelay: (count: number) => Math.min(1000 * count, 3000),
         prefetch: {
           enabled: true,
-          batchMax: 5,
-          timeout: 2000
+          batchMax: 3,
+          timeout: 1000
         },
         defaultFetchOptions: {
-          timeout: 15000,
+          timeout: 5000,
         },
-        fetchPolicy: 'cache-first',
+        fetchPolicy: 'cache-and-network',
       },
     },
   },
